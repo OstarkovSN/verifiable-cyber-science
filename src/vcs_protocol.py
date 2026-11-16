@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 import re
 import shutil
@@ -205,6 +206,10 @@ def verify_candidate(work, manifest, out):
     return result
 
 
+class NativeAuthenticationError(ValueError):
+    """Native subscription credentials/status need owner intervention."""
+
+
 def native_codex():
     executable = shutil.which("codex")
     if not executable:
@@ -227,6 +232,71 @@ def native_claude():
 def client_name(config):
     # States from the original release have no agent field.
     return config.get("agent", "codex")
+
+
+def resource_limits(memory="8g", cpus="2"):
+    """Bound each container; reject Docker's unlimited/special-value spellings."""
+    match = re.fullmatch(r"([1-9][0-9]*)([mg])", str(memory).lower())
+    if not match:
+        raise ValueError("memory must be an integer with m or g suffix (128m to 8g)")
+    size = int(match[1]) * (1024 ** (2 if match[2] == "m" else 3))
+    if not 128 * 1024 ** 2 <= size <= 8 * 1024 ** 3:
+        raise ValueError("memory must be between 128m and 8g")
+    try:
+        cpu = Decimal(str(cpus))
+    except InvalidOperation as exc:
+        raise ValueError("cpus must be between 0.1 and 8") from exc
+    if not cpu.is_finite() or not Decimal("0.1") <= cpu <= 8:
+        raise ValueError("cpus must be between 0.1 and 8")
+    return {"memory": str(memory).lower(), "cpus": format(cpu, "f")}
+
+
+def freeze_protocol(run, task_file, instructions_file, expected_hashes=None):
+    """Copy only this question and instructions; never expose input siblings."""
+    sources = {"instructions.txt": Path(instructions_file), "task.txt": Path(task_file)}
+    # Read once: exact same bytes are validated, hashed and written.
+    contents = {name: path.read_bytes() for name, path in sources.items()}
+    for name, expected in (expected_hashes or {}).items():
+        if expected and hashlib.sha256(contents[name]).hexdigest() != expected:
+            raise ValueError("protocol input differs from expected matrix hash: " + name)
+    for data in contents.values():
+        if not data.decode("utf-8").strip():
+            raise ValueError("protocol inputs must be nonempty UTF-8 text")
+    target = run / "control/protocol"
+    ensure_directory(target)
+    metadata = {}
+    for name, data in contents.items():
+        atomic_write(target / name, data)
+        metadata[name] = {"sha256": hashlib.sha256(data).hexdigest(),
+                          "source": str(sources[name].resolve()), "time": stamp()}
+    return metadata
+
+
+def protocol_text(run, state):
+    """Verify each run snapshot before use; retain original v1 semantics."""
+    if "protocol_inputs" not in state:
+        instructions = ROOT / "protocols/v1/instructions.txt"
+        task = ROOT / "protocols/v1/task-balls.txt"
+        if (state.get("protocol_sha256", digest(instructions)) != digest(instructions) or
+                state.get("task_sha256", digest(task)) != digest(task)):
+            raise ValueError("protocol changed; start a new run")
+        return instructions.read_text(), task.read_text()
+    if not state["runtime"].get("protocol_snapshot"):
+        raise ValueError("custom protocol snapshot mount configuration missing")
+    metadata = state["protocol_inputs"]
+    if set(metadata) != {"instructions.txt", "task.txt"}:
+        raise ValueError("invalid protocol snapshot metadata")
+    contents = {}
+    for name in ["instructions.txt", "task.txt"]:
+        path = inside(run / "control", "protocol/" + name)
+        data = path.read_bytes()
+        if hashlib.sha256(data).hexdigest() != metadata[name]["sha256"]:
+            raise ValueError("protocol snapshot changed; start a new run")
+        contents[name] = data.decode("utf-8")
+    if (metadata["instructions.txt"]["sha256"] != state["protocol_sha256"] or
+            metadata["task.txt"]["sha256"] != state["task_sha256"]):
+        raise ValueError("protocol snapshot binding changed")
+    return contents["instructions.txt"], contents["task.txt"]
 
 
 def runtime_config(library_root, codex_binary=None, auth_file=None, agent="codex", claude_binary=None):
@@ -252,6 +322,8 @@ def runtime_config(library_root, codex_binary=None, auth_file=None, agent="codex
     # Inspect credential metadata only. Never load credential values into Python or logs.
     for path in [lean / "bin/lean", lean / "bin/leanchecker", *required]:
         if not path.is_file():
+            if path == auth:
+                raise NativeAuthenticationError("native subscription credential file missing; owner login required")
             raise ValueError(f"required native dependency missing: {path}")
     version = subprocess.check_output([str(binary), "--version"], text=True).strip()
     if version != expected_version:
@@ -283,7 +355,8 @@ def runtime_provenance(config):
                       client_version=config.get("client_version", config.get("codex_version")),
                       client_sha256=config.get("client_sha256", config.get("codex_sha256")),
                       requested_model=config.get("model", DEFAULT_MODELS[agent]),
-                      requested_reasoning_effort=config.get("reasoning_effort", "medium"))
+                      requested_reasoning_effort=config.get("reasoning_effort", "medium"),
+                      **resource_limits(config.get("memory", "8g"), config.get("cpus", "2")))
     if agent == "codex":
         for key in ["codex_version", "codex_sha256", "code_mode_host", "code_mode_host_sha256"]:
             if key in config:
@@ -312,7 +385,8 @@ def mount(src, dst, readonly=True):
 def docker_base(config, work, scientist=False):
     """No host home, daemon socket, repository root, global instructions or env."""
     cmd = ["docker", "run", "--rm", "--pull=never", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges",
-           "--pids-limit=256", "--memory=8g", "--cpus=2", "--user", f"{os.getuid()}:{os.getgid()}",
+           "--pids-limit=256", "--memory=" + resource_limits(config.get("memory", "8g"), config.get("cpus", "2"))["memory"],
+           "--cpus=" + resource_limits(config.get("memory", "8g"), config.get("cpus", "2"))["cpus"], "--user", f"{os.getuid()}:{os.getgid()}",
            "--tmpfs", "/tmp:rw,nosuid,size=1g,mode=1777", "--tmpfs", "/home/scientist:rw,nosuid,size=128m,mode=1777",
            "--env", "HOME=/home/scientist", "--env", "CODEX_HOME=/home/scientist/.codex",
            "--env", "CLAUDE_CONFIG_DIR=/home/scientist/.claude",
@@ -338,7 +412,12 @@ def docker_base(config, work, scientist=False):
             cmd += mount(config["codex"], "/usr/local/bin/codex")
             cmd += mount(config["code_mode_host"], "/usr/local/bin/codex-code-mode-host")
             cmd += mount(config["auth"], "/native-auth/auth.json")
-        cmd += mount(ROOT / "protocols/v1", "/protocol")
+        if config.get("protocol_snapshot"):
+            # File mounts exclude siblings, provenance, prior answers and host control.
+            for name in ["instructions.txt", "task.txt"]:
+                cmd += mount(Path(work).parent / "control/protocol" / name, "/protocol/" + name)
+        else:
+            cmd += mount(ROOT / "protocols/v1", "/protocol")
     return cmd
 
 
@@ -386,6 +465,8 @@ def freeze_and_check(run, state):
     except subprocess.TimeoutExpired:
         verdict = {"ok": False, "verdict": "no_verdict", "error": "checker container timeout"}
     provenance = runtime_provenance(state["runtime"])
+    if state.get("protocol_inputs"):
+        provenance["protocol_inputs"] = state["protocol_inputs"]
     if state.get("initial_feedback"):
         provenance["initial_feedback"] = state["initial_feedback"]
     provenance["checker_sources"] = {name: digest(ROOT / "src" / name)
@@ -437,7 +518,7 @@ def ensure_subscription(config, work):
         valid = login.returncode == 0 and bool(re.search(r"(?im)^Logged in using ChatGPT\b", login.stdout + login.stderr))
         label = "ChatGPT"
     if not valid:
-        raise ValueError(f"native {label} subscription login required; no API fallback")
+        raise NativeAuthenticationError(f"native {label} subscription login required; no API fallback")
 
 
 def scientist_command(config):
@@ -495,6 +576,44 @@ def claude_result_failure(trace):
     return None
 
 
+def client_failure_kind(trace, agent):
+    """Classify native auth/quota error metadata, never scientific/tool content."""
+    messages = []
+    with Path(trace).open() as stream:
+        for line in stream:
+            try:
+                event = json.loads(line)
+            except ValueError:
+                # Native clients sometimes fail before emitting JSON.
+                if re.match(r"(?i)^(?:error: |you.ve hit your (?:usage|weekly) limit|not logged in|authentication failed)", line.strip()):
+                    messages.append(line.strip())
+                continue
+            if not isinstance(event, dict):
+                continue
+            kind = event.get("type")
+            if agent == "claude":
+                if kind == "rate_limit_event":
+                    info = event.get("rate_limit_info", {})
+                    if isinstance(info, dict) and info.get("status") not in {"allowed", "allowed_warning"}:
+                        return "quota"
+                if kind == "result" and (event.get("is_error") or event.get("subtype") != "success"):
+                    if event.get("subtype") == "error_max_budget_usd":
+                        return "quota"
+                    messages.append(str(event.get("errors", [])))
+                if kind in {"error", "assistant"} and event.get("error"):
+                    messages.append(str(event["error"]))
+                elif kind == "error":
+                    messages.append(str(event.get("message", "")))
+            elif kind in {"error", "turn.failed", "response.failed"}:
+                messages.append(str(event.get("error", event.get("message", ""))))
+    text = " ".join(messages).lower()
+    if re.search(r"quota|rate[_ -]?limit|usage limit|weekly limit|insufficient[_ ]credits|credit balance", text):
+        return "quota"
+    if re.search(r"authenticat|unauthori[sz]ed|not logged in|login required|invalid[_ -]?(?:api[_ -]?)?key|token expired|expired token|refresh.{0,24}(?:token|credential)|(?:token|credential).{0,24}refresh|401", text):
+        return "authentication"
+    return None
+
+
 def checked_history(run, state):
     """Validate host-custodied evidence before using it in another scientist cycle."""
     feedback = state.get("initial_feedback")
@@ -516,20 +635,22 @@ def checked_history(run, state):
 def _execute_once(run, state):
     work = run / "work"
     try:
+        instructions, task = protocol_text(run, state)
         decisions = checked_history(run, state)
         ensure_subscription(state["runtime"], work)
-    except Exception:
+    except Exception as exc:
         state["status"] = "scientist_failed"
-        state["error"] = "Subscription login or recorded evidence check failed; inspect the host record before resuming."
+        state["failure_kind"] = "authentication" if isinstance(exc, NativeAuthenticationError) else "evidence_or_runtime"
+        state["error"] = "Subscription login, protocol snapshot or recorded evidence check failed; inspect the host record before resuming."
         write_json(run / "control/state.json", state)
         click.echo(json.dumps({"status": state["status"], "error": state["error"]}))
         return
     state.pop("error", None)
+    state.pop("failure_kind", None)
     state["status"] = "running"
     state["cycles"] += 1
     write_json(run / "control/state.json", state)
-    prompt = ((ROOT / "protocols/v1/instructions.txt").read_text() + "\nTASK:\n" +
-              (ROOT / "protocols/v1/task-balls.txt").read_text() +
+    prompt = (instructions + "\nTASK:\n" + task +
               "\nThis is cycle " + str(state["cycles"]) + ". Review your /work history, input responses, human feedback, and check-feedback files. Revise failures using the actual diagnostic output. Work in /work. Stop after a request or a checkable candidate. Do not self-approve.\n")
     if state.get("initial_feedback"):
         prompt += ("\nINITIAL HUMAN TASK CLARIFICATION (host-recorded user input; not proof acceptance):\n" +
@@ -543,13 +664,17 @@ def _execute_once(run, state):
     try:
         with trace.open("w") as log:
             proc = run_container(cmd, input=prompt, text=True, stdout=log, stderr=subprocess.STDOUT, timeout=7200)
-        if proc.returncode:
+        failure_kind = client_failure_kind(trace, client_name(state["runtime"]))
+        if failure_kind:
+            failure = f"{client_name(state['runtime'])} reported native {failure_kind} failure"
+        elif proc.returncode:
             failure = f"{client_name(state['runtime'])} exited {proc.returncode}"
         elif client_name(state["runtime"]) == "claude":
             failure = claude_result_failure(trace)
         else:
             failure = None
         if failure:
+            state["failure_kind"] = failure_kind or "client"
             state["status"] = "scientist_failed"
             state["error"] = f"{failure}; inspect {trace.name}; do not fallback to APIs"
         elif list((work / "requests").glob("*.json")):
@@ -607,7 +732,7 @@ def execute_cycle(run, state):
 
 @click.group()
 def main():
-    """Isolated balls protocol with independent Lean checks and explicit human review."""
+    """Isolated scientific protocol with independent Lean checks and explicit human review."""
 
 
 @main.command()
@@ -618,26 +743,51 @@ def main():
 @click.option("--claude-binary", type=click.Path(exists=True, path_type=Path))
 @click.option("--initial-feedback-file", type=click.Path(exists=True, dir_okay=False, path_type=Path), help="Exact human task clarification for a fresh run; never proof acceptance")
 @click.option("--auth-file", type=click.Path(exists=True, path_type=Path))
+@click.option("--task-file", type=click.Path(exists=True, dir_okay=False, path_type=Path), help="Natural-language question; frozen for this run")
+@click.option("--instructions-file", type=click.Path(exists=True, dir_okay=False, path_type=Path), help="Scientist instructions; frozen for this run")
+@click.option("--expected-task-sha256", help="Require exact input bytes from a matrix plan")
+@click.option("--expected-instructions-sha256", help="Require exact input bytes from a matrix plan")
+@click.option("--memory", default="8g", show_default=True, help="Container memory, 128m through 8g")
+@click.option("--cpus", default="2", show_default=True, help="Container CPU allocation, 0.1 through 8")
 @click.option("--model", help="Defaults to gpt-6.1-sol for Codex, claude-sonnet-5-5 for Claude")
 @click.option("--reasoning-effort", type=click.Choice(["low", "medium", "high", "xhigh", "max", "ultra"]), default="medium", show_default=True)
-def start(run_dir, library_root, agent, codex_binary, claude_binary, initial_feedback_file, auth_file, model, reasoning_effort):
+def start(run_dir, library_root, agent, codex_binary, claude_binary, initial_feedback_file, auth_file, model, reasoning_effort, task_file, instructions_file, memory, cpus, expected_task_sha256, expected_instructions_sha256):
     """Start a NEW run. This command launches the scientist model."""
     if run_dir.exists():
         raise click.ClickException("run directory already exists; use resume")
+    if (expected_task_sha256 or expected_instructions_sha256) and not (task_file or instructions_file):
+        raise click.ClickException("expected input hashes require custom task/instructions files")
     if agent == "claude" and reasoning_effort not in {"low", "medium", "high", "xhigh", "max"}:
         raise click.ClickException("Claude does not support that reasoning effort")
+    try:
+        limits = resource_limits(memory, cpus)
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
     initial_feedback = initial_feedback_file.read_bytes() if initial_feedback_file else None
     if initial_feedback is not None:
         initial_feedback.decode("utf-8")  # Require text, preserve exact bytes below.
-    config = runtime_config(library_root, codex_binary, auth_file, agent, claude_binary)
-    config.update(model=model or DEFAULT_MODELS[agent], reasoning_effort=reasoning_effort)
+    try:
+        config = runtime_config(library_root, codex_binary, auth_file, agent, claude_binary)
+    except NativeAuthenticationError as exc:
+        click.echo(json.dumps({"vcs_client_failure": True, "agent": agent, "failure_kind": "authentication"}))
+        raise click.ClickException(str(exc)) from exc
+    config.update(model=model or DEFAULT_MODELS[agent], reasoning_effort=reasoning_effort, **limits)
     run = run_dir.resolve()
     (run / "work").mkdir(parents=True)
     (run / "control").mkdir(mode=0o700)
     state = {"version": 1, "status": "new", "cycles": 0, "attempts": [], "responses": [], "runtime": config,
              "protocol_sha256": digest(ROOT / "protocols/v1/instructions.txt"), "task_sha256": digest(ROOT / "protocols/v1/task-balls.txt")}
     # Preserve original scientific input in host custody, outside the agent's workspace.
-    shutil.copytree(ROOT / "protocols/v1", run / "control/protocol")
+    if task_file or instructions_file:
+        inputs = freeze_protocol(run, task_file or ROOT / "protocols/v1/task-balls.txt",
+                                 instructions_file or ROOT / "protocols/v1/instructions.txt",
+                                 {"task.txt": expected_task_sha256, "instructions.txt": expected_instructions_sha256})
+        config["protocol_snapshot"] = True
+        state.update(version=2, protocol_inputs=inputs,
+                     protocol_sha256=inputs["instructions.txt"]["sha256"],
+                     task_sha256=inputs["task.txt"]["sha256"])
+    else:
+        shutil.copytree(ROOT / "protocols/v1", run / "control/protocol")
     if initial_feedback is not None:
         atomic_write(run / "control/initial-feedback.txt", initial_feedback)
         state["initial_feedback"] = {"source": "human task clarification supplied via --initial-feedback-file",
@@ -661,9 +811,8 @@ def resume(run, agent):
         raise click.ClickException("agent differs from recorded run; start a new run")
     if state["status"] not in {"rejected", "input_received", "check_failed", "scientist_failed", "incomplete"}:
         raise click.ClickException("resume requires rejection, supplied input or a failed/incomplete cycle")
-    if digest(ROOT / "protocols/v1/instructions.txt") != state["protocol_sha256"] or digest(ROOT / "protocols/v1/task-balls.txt") != state["task_sha256"]:
-        raise click.ClickException("protocol changed; start a new run")
     try:
+        protocol_text(run, state)
         validate_runtime(state["runtime"])
         checked_history(run, state)
     except ValueError as exc:
@@ -733,8 +882,12 @@ def review(run, decision, binding, reason):
 @click.argument("run", type=click.Path(exists=True, path_type=Path))
 def status(run):
     """Print human/input checkpoints; invalidate acceptance if artifacts changed."""
+    click.echo(json.dumps(status_result(run), indent=2))
+
+
+def status_result(run):
     state = load_state(run)
-    result = {"status": state["status"], "error": state.get("error"),
+    result = {"status": state["status"], "error": state.get("error"), "failure_kind": state.get("failure_kind"),
               "requests": [read_json(inside(run / "work", str(p.relative_to(run / "work"))))
                            for p in (run / "work/requests").glob("*.json")]}
     if state["attempts"]:
@@ -748,7 +901,7 @@ def status(run):
             result["status"] = state["status"]
             write_json(run / "control/state.json", state)
         result.update(attempt=entry, packet=str(run / entry["path"] / "packet.json"))
-    click.echo(json.dumps(result, indent=2))
+    return result
 
 
 @main.group(hidden=True)

@@ -9,6 +9,7 @@ dev = ["pytest>=8,<9"]
 
 [project.scripts]
 vcs-protocol = "vcs_protocol:main"
+vcs-matrix = "vcs_matrix:main"
 
 [build-system]
 requires = ["hatchling"]

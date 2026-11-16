@@ -39,6 +39,54 @@ to each scientist prompt as human task clarification. It carries no proof approv
 changing the host copy blocks continuation. To keep independent runs independent,
 supply current human instructions without previous scientist solutions.
 
+Custom natural-language questions use `--task-file` and `--instructions-file` on
+`vcs-protocol start`. Either option may be supplied; the missing input defaults
+to its v1 file. Custom runs freeze the exact UTF-8 bytes as
+`control/protocol/task.txt` and `instructions.txt`, record source paths and SHA256
+hashes, and use those verified snapshots for every prompt and resume. Live source
+edits do not change a run; snapshot edits stop it before inference. Only those
+two files are mounted read-only at `/protocol`; neighboring tasks, source metadata
+and other host control files remain outside the container. Existing v1 runs keep
+their original defaults and live-v1 hash checks. V1 scientific instructions are
+unchanged. `--memory` (default `8g`, range `128m`–`8g`) and `--cpus` (default `2`,
+range `0.1`–`8`) apply to both scientist and independent checker containers and
+appear in runtime provenance.
+
+The finite matrix runner takes exactly three `*.txt` question files and launches
+one fresh Codex and one fresh Claude run per question. The first wave covers all
+three questions with Codex; the Claude runs follow as queue slots open. The models are pinned to
+`gpt-6.1-sol` and `claude-sonnet-5-5`, both at `medium` effort. Preview without
+creating files or invoking Docker or either client:
+
+```sh
+uv run vcs-matrix --task-dir protocols/v2/tasks --instructions-file protocols/v2/instructions.txt --run-root artifacts/three-tasks/run-001 --library-root /path/to/pinned-cache-checkout --max-concurrent 3 --memory 4g --cpus 2 --dry-run
+```
+
+For an authorized launch, remove `--dry-run`. The runner refuses an existing
+run root. At most three jobs run concurrently, with configured totals capped at
+12 GiB memory and six CPUs. Each run's checker uses that same job's slot and
+limits. The matrix freezes its inputs once, and passes their expected hashes to
+each child so paired runs cannot silently receive different question bytes.
+No scientist receives another task, run, answer or previous scientist feedback.
+
+`matrix.json` records the six exact commands, input hashes, per-job exit codes,
+current protocol status, requests and review packets. `matrix.log` records queue
+events; `logs/JOB.log` retains each child's combined CLI output. Each run under
+`runs/JOB` also retains its raw scientist traces and checking evidence. Input and
+review checkpoints free a queue slot; **awaiting_review is not scientific
+acceptance**. The queue never answers requests, makes reviews or resumes a run.
+Use `vcs-protocol status`, `respond`, `review` and explicit `resume` on the
+individual run paths after inspecting the manifest.
+
+Authentication and quota errors stop new jobs for that client; its unfinished
+jobs remain `queued` with a block reason. Already-running jobs finish normally,
+and the other client's eligible jobs continue. Tool, checking and other per-job
+failures remain visible without cancelling sibling jobs. There is no automatic
+retry of a failed client, API fallback or owner login repair. The matrix exits
+nonzero if any job failed or a client requires owner action. Interruption stops
+active child processes and their containers and preserves unstarted queue entries.
+It runs once, with six jobs and a nine-hour maximum per job; it installs no service.
+
 `--library-root` defaults to this checkout. It must have `.lake/packages` built
 against the exact release `lake-manifest.json`. Only package build libraries are mounted,
 not that checkout's tasks, proofs, instructions, artifacts or source history.
