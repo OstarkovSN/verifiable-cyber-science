@@ -23,7 +23,6 @@ import click
 ROOT = Path(__file__).resolve().parents[1]
 IMAGE = "sha256:c0e8df9380519cf514d5fbb5aeaa7aa5de5f32c50330badcadc05cdabaae5566"
 CODEX_VERSION = "codex-cli 0.166.0"
-ROLES = {"model", "update", "prediction"}
 NAME = re.compile(r"[A-Za-z_][A-Za-z_0-9']*")
 
 
@@ -113,11 +112,13 @@ def inside(base, relative):
 def load_candidate(work, manifest):
     manifest = inside(work, str(Path(manifest).relative_to(work)))
     m = read_json(manifest)
-    if set(m.get("conclusions", {})) != ROLES:
-        raise ValueError("conclusions must contain model, update and prediction")
-    names = list(m["conclusions"].values())
-    if len(set(names)) != 3 or not all(isinstance(n, str) and NAME.fullmatch(n) for n in names):
-        raise ValueError("three distinct plain theorem names are required")
+    conclusions = m.get("conclusions")
+    if not isinstance(conclusions, dict) or not conclusions or not all(
+            isinstance(label, str) and label.strip() for label in conclusions):
+        raise ValueError("conclusions must be a nonempty mapping of labels to theorem names")
+    names = list(conclusions.values())
+    if not all(isinstance(n, str) and NAME.fullmatch(n) for n in names) or len(set(names)) != len(names):
+        raise ValueError("distinct plain theorem names are required")
     for key in ["user_facts", "model_choices", "sources", "incorporated_inputs"]:
         if not isinstance(m.get(key), list) or not all(isinstance(s, str) for s in m[key]):
             raise ValueError(f"{key} must be a list of strings")

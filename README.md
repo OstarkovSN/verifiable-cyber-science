@@ -4,8 +4,7 @@ Human-in-the-loop Bayesian modeling and Lean verification. The complete workflow
 
 ## Setup and operation
 
-The scientist proposes and revises its own Bayesian model. It has **not** been run on the scientific
-balls task. The protocol contains the user's question and instructions, with no
+The scientist proposes and revises its own Bayesian model. Every candidate requires explicit human review; successful Lean checking does not constitute human scientific acceptance. The protocol contains the user's question and instructions, with no
 preset prior, parameters, worked solution or expected answer.
 
 From this checkout, `uv sync --group dev` installs the locked Python dependencies.
@@ -21,7 +20,7 @@ When a scientist run is authorized, this single command starts it:
 uv run vcs-protocol start --run-dir artifacts/balls/run-001 --library-root /path/to/pinned-cache-checkout
 ```
 
-The requested model defaults to `gpt-6.1-sol` with `medium` reasoning. Override with `--model` and `--reasoning-effort`; both are recorded in run state and review provenance. Provider availability is checked only by an authorized run; these settings have not been tested through scientist inference.
+The requested model defaults to `gpt-6.1-sol` with `medium` reasoning. Override with `--model` and `--reasoning-effort`; both are recorded in run state and review provenance. Subscription authentication and provider availability are checked by an authorized run; client or quota errors stop the workflow.
 
 `--library-root` defaults to this checkout. It must have `.lake/packages` built
 against the exact release `lake-manifest.json`. Only package build libraries are mounted,
@@ -76,8 +75,7 @@ approved result, even if the scientist's working draft later changes.
 Both added axioms and `sorry` produce **proved_if**, including unused additions.
 Human acceptance retains that conditional verdict. Checker errors, missing
 reports and timeouts never become a proof or an accepted scientific result.
-The roles `model`, `update` and `prediction` must name distinct actual theorems,
-but their scientific substance cannot be certified by their names: the human
+The conclusion manifest names one or more distinct actual final theorems; supporting model and update results may remain intermediate lemmas. Scientific substance cannot be certified by theorem names: the human
 must reject arithmetic-only, irrelevant or misleading formalizations and inspect
 facts versus choices and external evidence. There is no automatic acceptance.
 

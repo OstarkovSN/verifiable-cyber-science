@@ -42,6 +42,25 @@ def test_import_and_metaprogram_contract(candidate):
             p.validate_source(bad, names)
 
 
+def test_single_final_conclusion_can_leave_supporting_results_intermediate(candidate):
+    manifest = p.read_json(candidate / "candidate.json")
+    manifest["conclusions"] = {"answer": "prediction_result"}
+    p.write_json(candidate / "candidate.json", manifest)
+    loaded, source, _ = p.load_candidate(candidate, candidate / "candidate.json")
+    p.validate_source(source.read_text(), list(loaded["conclusions"].values()))
+    assert loaded["conclusions"] == {"answer": "prediction_result"}
+
+
+@pytest.mark.parametrize("conclusions", [None, {}, [], {"": "prediction_result"},
+    {"answer": []}, {"answer": "not a name"}, {"answer": "prediction_result", "duplicate": "prediction_result"}])
+def test_invalid_final_conclusion_manifests_are_rejected(candidate, conclusions):
+    manifest = p.read_json(candidate / "candidate.json")
+    manifest["conclusions"] = conclusions
+    p.write_json(candidate / "candidate.json", manifest)
+    with pytest.raises(ValueError):
+        p.load_candidate(candidate, candidate / "candidate.json")
+
+
 def test_paths_and_manifest_fail_closed(candidate):
     manifest = p.read_json(candidate / "candidate.json")
     manifest["proof_file"] = "../outside.lean"
@@ -154,11 +173,15 @@ def test_real_docker_isolation(runtime, tmp_path):
     assert result.returncode == 0 and "--listen" in result.stdout, result.stderr
 
 
-@pytest.mark.parametrize("kind,expected", [("valid", "proved"), ("invalid", "not_proved"), ("axiom", "proved_if"), ("sorry", "proved_if")])
+@pytest.mark.parametrize("kind,expected", [("valid", "proved"), ("single", "proved"), ("invalid", "not_proved"), ("axiom", "proved_if"), ("sorry", "proved_if")])
 def test_real_lean_controls(runtime, candidate, kind, expected):
     source = candidate / "Model.lean"
     s = source.read_text()
-    if kind == "invalid":
+    if kind == "single":
+        manifest = p.read_json(candidate / "candidate.json")
+        manifest["conclusions"] = {"answer": "prediction_result"}
+        p.write_json(candidate / "candidate.json", manifest)
+    elif kind == "invalid":
         s = s.replace("given_count = 50 := rfl", "given_count = 49 := rfl")
     elif kind == "axiom":
         s = s.replace("theorem prediction_result : 2 = 2 := rfl", "axiom added_premise : 2 = 3\ntheorem prediction_result : 2 = 3 := added_premise")
@@ -174,7 +197,11 @@ def test_real_lean_controls(runtime, candidate, kind, expected):
     if expected in {"proved", "proved_if"}:
         assert verdict["extraction"]["compiles_alone"]
         assert all(verdict["extraction"]["faithful"].values())
-        assert "given_count" in verdict["extraction"]["assumption_declarations"]
+        if kind != "single":
+            assert "given_count" in verdict["extraction"]["assumption_declarations"]
+        else:
+            assert verdict["extraction"]["conclusions"] == ["prediction_result"]
+            assert "given_count" not in verdict["extraction"]["assumption_declarations"]
     if expected == "proved_if":
         assert verdict["added_assumptions"]
 
