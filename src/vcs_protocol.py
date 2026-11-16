@@ -475,8 +475,16 @@ def claude_result_failure(trace):
                 if not isinstance(info, dict) or info.get("status") not in {"allowed", "allowed_warning"}:
                     return "Claude reported a quota/rate limit"
             if event.get("type") == "result":
+                # A completed background tool can resume the same print session,
+                # producing another successful result before the process exits.
+                if event.get("subtype") != "success" or event.get("is_error") is not False:
+                    return "Claude did not complete successfully (auth, quota, turn limit or client error)"
+                if event.get("errors"):
+                    return "Claude reported result errors"
                 if result is not None:
-                    return "Claude produced multiple terminal results"
+                    session = event.get("session_id")
+                    if not isinstance(session, str) or not session or session != result.get("session_id"):
+                        return "Claude produced results for different or unknown sessions"
                 result = event
     if result is None:
         return "Claude produced no terminal result"

@@ -65,6 +65,13 @@ SUCCESS = {"type": "result", "subtype": "success", "is_error": False, "result": 
     ([dict(SUCCESS, subtype="error_max_budget_usd")], True),
     ([{"type": "error", "message": "auth failed"}, SUCCESS], True),
     ([SUCCESS, SUCCESS], True),
+    ([dict(SUCCESS, session_id="same"), {"type": "system", "subtype": "task_notification"},
+      dict(SUCCESS, session_id="same")], False),
+    ([dict(SUCCESS, session_id="one"), dict(SUCCESS, session_id="two")], True),
+    ([dict(SUCCESS, session_id="same", subtype="error_max_turns"),
+      dict(SUCCESS, session_id="same")], True),
+    ([dict(SUCCESS, session_id="same", errors=["authentication failed"]),
+      dict(SUCCESS, session_id="same")], True),
 ])
 def test_claude_stream_results(tmp_path, events, fails):
     trace = tmp_path / "trace.jsonl"
