@@ -8,8 +8,9 @@ The scientist proposes and revises its own Bayesian model. Every candidate requi
 preset prior, parameters, worked solution or expected answer.
 
 From this checkout, `uv sync --group dev` installs the locked Python dependencies.
-Only the native Codex launcher is implemented; there is no Claude launcher. Docker, the existing native Codex **0.166.0** subscription login, Lean **4.35.0**,
-and the pinned Mathlib cache are prerequisites. The launcher uses the locally
+Docker, Lean **4.35.0**, the pinned Mathlib cache and an existing native
+subscription login are prerequisites. Both Codex **0.166.0** and Claude Code
+**2.1.325** are supported; the default client remains Codex. The launcher uses the locally
 available image ID
 `sha256:c0e8df9380519cf514d5fbb5aeaa7aa5de5f32c50330badcadc05cdabaae5566`
 (`python:3.13-slim` when tested); it never pulls an image automatically.
@@ -20,23 +21,54 @@ When a scientist run is authorized, this single command starts it:
 uv run vcs-protocol start --run-dir artifacts/balls/run-001 --library-root /path/to/pinned-cache-checkout
 ```
 
-The requested model defaults to `gpt-6.1-sol` with `medium` reasoning. Override with `--model` and `--reasoning-effort`; both are recorded in run state and review provenance. Subscription authentication and provider availability are checked by an authorized run; client or quota errors stop the workflow.
+Choose `--agent codex` (default) or `--agent claude`. The requested model defaults
+to `gpt-6.1-sol` for Codex and `claude-sonnet-5-5` for Claude, with `medium`
+reasoning. Override with `--model` and `--reasoning-effort`; the client, version,
+binary path and hash, requested model and effort are recorded in run state and
+review provenance. Client or quota errors stop the workflow.
+
+For an authorized independent Claude run:
+
+```sh
+uv run vcs-protocol start --agent claude --run-dir artifacts/balls/claude-run-001 --library-root /path/to/pinned-cache-checkout --model claude-sonnet-5-5 --reasoning-effort medium --initial-feedback-file human-clarification.txt
+```
+
+`--initial-feedback-file` is optional and available only for a fresh run. Its exact
+UTF-8 text is copied into host `control/initial-feedback.txt`, hashed and appended
+to each scientist prompt as human task clarification. It carries no proof approval;
+changing the host copy blocks continuation. To keep independent runs independent,
+supply current human instructions without previous scientist solutions.
 
 `--library-root` defaults to this checkout. It must have `.lake/packages` built
 against the exact release `lake-manifest.json`. Only package build libraries are mounted,
 not that checkout's tasks, proofs, instructions, artifacts or source history.
-The native CLI and its `codex-code-mode-host` terminal companion are mounted together and their hashes recorded. The installed native binary is discovered from the normal npm Codex installation;
-`--codex-binary` can supply its path explicitly. `--auth-file` defaults to the
-normal CLI's `CODEX_HOME/auth.json` or `~/.codex/auth.json`.
+For Codex, the native CLI and its `codex-code-mode-host` terminal companion are
+mounted together and their hashes recorded. The binary is discovered from the
+normal npm installation; `--codex-binary` can supply its path explicitly.
+`--auth-file` defaults to `CODEX_HOME/auth.json` or `~/.codex/auth.json`.
+
+For Claude, `--claude-binary` supplies the standalone native executable; by
+default it is resolved from `claude` on PATH. `--auth-file` defaults to
+`~/.claude/.credentials.json`. The credentials file alone is mounted read-only at
+`/native-auth/claude-credentials.json` and symlinked into the fresh
+`CLAUDE_CONFIG_DIR=/home/scientist/.claude`. A minimal onboarding config is created
+there with non-account preferences. Host `~/.claude.json`, settings, plugins,
+agent definitions, global instructions and home directories are never mounted.
+Each cycle checks native `claude auth status --json` for `loggedIn: true` and
+`authMethod: claude.ai`; API-key and third-party auth are refused. Claude runs with
+project/local settings only, strict MCP config, no session persistence, an
+explicit built-in tool list excluding agents, and a limit of 80 turns. No
+`--bare` or fallback-model option is used. Stream result errors, auth/quota errors,
+turn-limit results and missing successful terminal results stop even on exit zero.
 
 The scientist has a fresh, temporary HOME in Docker. Selected harness files,
-protocol, Lean installation, native libraries and Codex binary are read-only;
+protocol, Lean installation, native libraries and selected client binary are read-only;
 only its run workspace is writable. No host home, global configuration,
 repository checkout, previous task cards, other run, Docker socket or secret
 environment variable is mounted. The normal native auth **file alone** is mounted
 read-only because the native client requires the existing subscription login.
 It is not scientific evidence; credentials are never copied or logged. The native
-client checks the login type before starting; API-key fallback is refused.
+client checks the login type before every cycle; API-key fallback is refused.
 Expired credentials or token refresh that requires writing the read-only file
 must be repaired using the normal host login, then the run resumed. The scientist
 container has network access for its subscription client; this is a filesystem
@@ -56,7 +88,8 @@ uv run vcs-protocol review artifacts/balls/run-001 --decision accept --binding H
 
 After supplying input or rejecting a candidate, `uv run vcs-protocol resume
 artifacts/balls/run-001` launches a fresh scientist context with the preserved
-history and feedback. A rejected candidate must be revised. Run directories are
+history and feedback. Resume selects the recorded client; an optional `--agent`
+must match it. A rejected candidate must be revised. Run directories are
 never reused by `start`. Quota or authentication failures stop the workflow;
 there is no paid fallback.
 
@@ -90,9 +123,11 @@ Controls (mock candidates, never scientist inference):
 ```sh
 uv run pytest tests/test_protocol.py -q
 VCS_TEST_LIBRARY_ROOT=/path/to/pinned-cache-checkout uv run pytest tests/test_protocol.py -q
+VCS_TEST_LIBRARY_ROOT=/path/to/pinned-cache-checkout VCS_TEST_CLAUDE=1 uv run pytest -q
 ```
 
-The opt-in controls exercise real Docker visibility and the native client's
-version command, then real Lean/kernel/extraction checks for valid, invalid,
+The opt-in controls exercise real Docker visibility and native client version
+commands, stdin transport, Claude profile/auth-file isolation and subscription
+status metadata (without printing account fields), then real Lean/kernel/extraction checks for valid, invalid,
 axiom-dependent and `sorry`-dependent files. The small positive control verifies
 the checking machinery; it is explicitly not a scientific balls proof.
