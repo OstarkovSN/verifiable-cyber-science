@@ -252,6 +252,8 @@ def docker_base(config, work, scientist=False):
            "--env", "HOME=/home/scientist", "--env", "CODEX_HOME=/home/scientist/.codex", "--env", "PYTHONPATH=/deps:/harness/src",
            "--env", "VAS_LEAN=/opt/lean/bin/lean", "--env", "PATH=/opt/lean/bin:/usr/local/bin:/usr/bin:/bin", "--workdir", "/work", "--entrypoint", "/harness/entrypoint.sh",
            "--network", "bridge" if scientist else "none"]
+    if scientist:
+        cmd.append("--interactive")  # Preserve the prompt piped to codex exec on stdin.
     cmd += mount(work, "/work", False) + mount(config["lean"], "/opt/lean") + mount(config["click"], "/deps/click")
     for source in ["vcs_lean.py", "vcs_extract.py", "vcs_protocol.py"]:
         cmd += mount(ROOT / "src" / source, "/harness/src/" + source)

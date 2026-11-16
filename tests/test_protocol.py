@@ -142,6 +142,12 @@ def test_real_docker_isolation(runtime, tmp_path):
     # Version only: native client starts in the real container, no model invocation.
     result = p.run_container(p.docker_base(runtime, work, scientist=True) + [p.IMAGE, "codex", "--version"], capture_output=True, text=True, timeout=60)
     assert result.returncode == 0 and p.CODEX_VERSION in result.stdout
+    # Real Docker transport control: the scientific prompt must reach stdin intact.
+    prompt = "CONTROL ONLY: stdin transport, not scientist inference.\n"
+    cmd = p.docker_base(runtime, work, scientist=True) + [p.IMAGE, "python", "-c",
+           "import sys; sys.stdout.write(sys.stdin.read())"]
+    result = p.run_container(cmd, input=prompt, capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0 and result.stdout == prompt, result.stderr
 
 
 @pytest.mark.parametrize("kind,expected", [("valid", "proved"), ("invalid", "not_proved"), ("axiom", "proved_if"), ("sorry", "proved_if")])
