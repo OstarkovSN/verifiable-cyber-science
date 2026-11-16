@@ -1,1 +1,0 @@
-{"title": "Balls in a box: Bayesian prediction of the next draw", "imports": [], "required": ["prior_matches_moments", "next_black_probability", "shortcut_matches_bayes", "moments_do_not_fix_prediction"]}

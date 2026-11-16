@@ -1,1 +1,0 @@
-{"title": "OPTIONAL derivation chain: projectile on flat ground, from Newton to the 45 degree optimum", "imports": [], "required": ["satisfies_newton", "motion_unique", "landing_time", "range_formula", "range_bound", "range_optimal_iff", "apex_height"]}

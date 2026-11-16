@@ -1,4 +1,0 @@
-{
-  "claude": {"cli": "claude", "cli_version": "2.1.317", "model": "claude-sonnet-5-5"},
-  "codex": {"cli": "codex", "cli_version": "0.166.0", "model": "gpt-6.1-sol", "reasoning_effort": "medium"}
-}

@@ -1,21 +1,5 @@
-"""Extract the assumptions and conclusions of a checked Lean file, mechanically (OSN, TG 4362-4364, step 4).
-
-Given a Lean file that compiles (a checker trail file: card, agent body, verifier theorems) and the names of its
-conclusion theorems, Lean itself computes what a person must read:
-  - assumptions: every declaration of this file that a conclusion's STATEMENT reaches, following definitions (their
-    types and bodies) down to the imported library, which is the trusted base and is not listed;
-  - added assumptions: every axiom and every sorry that a conclusion's PROOF reaches (vas_check.LISTER);
-  - conclusions: the statements of the named theorems.
-Helper definitions and lemmas used only inside proofs are not assumptions: Lean checked them.
-
-The assumption declarations are cut out of the source by the ranges Lean recorded for them, in file order, inside
-their namespaces, and written with each conclusion as `def conclusion_<n> : Prop := <statement>` to <out>.lean.
-Step 5 then compiles that file alone and compares, as Lean prints them, each extracted conclusion with the original
-theorem's statement: "faithful" means every one is identical, so the extracted file states exactly what was proved.
-
-Run: python3 src/vas_extract.py FILE.lean --theorem next_black_probability [--theorem ...] --out extracted
-     (writes extracted.lean and extracted.json next to --out; prints the JSON)
-"""
+"""Extract statement dependencies and conclusions; independently compile and compare."""
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -27,8 +11,38 @@ import sys
 import click
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
-from vas_check import LEAN, LEANCHECKER, LISTER, listed  # noqa: E402
+from vcs_lean import LEAN, LEANCHECKER, LISTER, listed  # noqa: E402
+
+# Display text omits implicit arguments, types and sometimes whole subterms.
+# Compare the complete kernel expressions instead. Binder names and metadata do
+# not affect meaning; remove them so source positions and fresh binder names do
+# not make an otherwise identical extraction fail. All constants, universe
+# levels, implicit arguments and binder information remain in the identity.
+IDENTITY = """
+private partial def VAS_identityExpr : Lean.Expr → Lean.Expr
+  | .mdata _ value => VAS_identityExpr value
+  | .app fn arg => .app (VAS_identityExpr fn) (VAS_identityExpr arg)
+  | .lam _ typ body info => .lam .anonymous (VAS_identityExpr typ) (VAS_identityExpr body) info
+  | .forallE _ typ body info => .forallE .anonymous (VAS_identityExpr typ) (VAS_identityExpr body) info
+  | .letE _ typ value body flag => .letE .anonymous (VAS_identityExpr typ) (VAS_identityExpr value) (VAS_identityExpr body) flag
+  | .proj owner idx value => .proj owner idx (VAS_identityExpr value)
+  | value => value
+
+private def VAS_declarationIdentity (ci : Lean.ConstantInfo) : String :=
+  let kind := match ci with
+    | .axiomInfo _ => "axiom"
+    | .defnInfo _ => "definition"
+    | .thmInfo _ => "theorem"
+    | .opaqueInfo _ => "opaque"
+    | .quotInfo _ => "quotient"
+    | .inductInfo info => s!"inductive {info.numParams} {info.numIndices} {reprStr info.ctors}"
+    | .ctorInfo info => s!"constructor {info.induct} {info.cidx} {info.numParams} {info.numFields}"
+    | .recInfo info => s!"recursor {info.numParams} {info.numIndices} {info.numMotives} {info.numMinors}"
+  let value := match ci.value? with
+    | some body => reprStr (VAS_identityExpr body)
+    | none => "no value"
+  s!"{kind}|levels={reprStr ci.levelParams}|type={reprStr (VAS_identityExpr ci.type)}|value={value}"
+"""
 
 REACH = """
 open Lean Elab Command Meta in
@@ -42,12 +56,14 @@ run_cmd do
     let some ci := kenv.find? t | throwError m!"no theorem {t}"
     todo := ci.type.getUsedConstants.toList ++ todo
     logInfo m!"VAS_CONCLUSION {t} : {← liftTermElabM <| ppExpr ci.type} VAS_END"
+    logInfo m!"VAS_ORIGINAL_IDENTITY {t} : {reprStr (VAS_identityExpr ci.type)} VAS_END"
   while !todo.isEmpty do
     let n := todo.head!
     todo := todo.tail!
     if seen.contains n || !localSet.contains n then continue
     seen := seen.insert n
     let some ci := kenv.find? n | continue
+    logInfo m!"VAS_DEPENDENCY_IDENTITY {n} : {VAS_declarationIdentity ci} VAS_END"
     let more := ci.type.getUsedConstants ++ (match ci with
       | .defnInfo v => v.value.getUsedConstants | .thmInfo v => v.value.getUsedConstants
       | .opaqueInfo v => v.value.getUsedConstants
@@ -74,6 +90,10 @@ run_cmd do
     let some ci := (← getEnv).find? n | throwError m!"no {n}"
     let some v := ci.value? | throwError m!"no value {n}"
     logInfo m!"VAS_EXTRACTED {n} : {← liftTermElabM <| ppExpr v} VAS_END"
+    logInfo m!"VAS_EXTRACTED_IDENTITY {n} : {reprStr (VAS_identityExpr v)} VAS_END"
+  for n in DEPENDENCIES do
+    let some ci := (← getEnv).find? n | throwError m!"missing extracted dependency {n}"
+    logInfo m!"VAS_EXTRACTED_DEPENDENCY_IDENTITY {n} : {VAS_declarationIdentity ci} VAS_END"
 """
 
 
@@ -81,7 +101,7 @@ def run_lean(path):
     """Lean, then leanchecker on the compiled module (OT-1861): a nonzero status if either fails."""
     libs = sorted((ROOT / ".lake/packages").glob("*/.lake/build/lib/lean"))
     env = dict(os.environ, LEAN_PATH=":".join(map(str, libs)), LEAN_NUM_THREADS="1")
-    with tempfile.TemporaryDirectory(prefix="vas-olean-") as build:
+    with tempfile.TemporaryDirectory(prefix="vcs-olean-") as build:
         r = subprocess.run([LEAN, "-j1", f"--root={Path(path).resolve().parent}", "-o", str(Path(build) / "VasExtract.olean"), str(path)], cwd=ROOT,
                            env=env, capture_output=True, text=True, timeout=900)
         if r.returncode != 0:
@@ -90,7 +110,18 @@ def run_lean(path):
                            env=dict(env, LEAN_PATH=env["LEAN_PATH"] + ":" + build,
                                     PATH=str(Path(LEAN).parent) + ":" + env.get("PATH", "")))
         note = f"\nleanchecker exit {c.returncode}\n{(c.stdout + c.stderr)[-1500:]}\n"
-        return (0 if c.returncode == 0 else 10 + c.returncode), r.stdout + r.stderr + note
+        return (0 if c.returncode == 0 else 10), r.stdout + r.stderr + note
+
+
+def expression_identities(text, marker):
+    """Read complete expression records; duplicate/missing records fail closed."""
+    records = re.findall(r"^" + re.escape(marker) + r" (\S+) : (.*?) VAS_END", text, re.M | re.S)
+    result = {}
+    for name, value in records:
+        if name in result:
+            raise ValueError(f"duplicate expression identity for {name}")
+        result[name] = " ".join(value.split())
+    return result
 
 
 def statement_text(lines, start, name):
@@ -117,7 +148,7 @@ def main(lean_file, theorems, out_stem):
     head = next(ln for ln in LISTER.splitlines() if ln.strip())
     if head in body:
         body = body[:body.index(head)]
-    probe.write_text(body + "\nset_option format.width 100000\n" + REACH.replace("TARGETS", targets)
+    probe.write_text(body + "\nset_option format.width 100000\n" + IDENTITY + REACH.replace("TARGETS", targets)
                      + LISTER.replace("ROOTS", targets))
     status, text = run_lean(probe)
     report = {"file": lean_file, "conclusions": list(theorems), "lean_exit": status}
@@ -131,6 +162,8 @@ def main(lean_file, theorems, out_stem):
         decls[name] = (int(a), int(b))
     unranged = re.findall(r"VAS_UNRANGED (\S+)", text)
     concl = dict(re.findall(r"VAS_CONCLUSION (\S+) : (.*?) VAS_END", text, re.S))
+    original_identities = expression_identities(text, "VAS_ORIGINAL_IDENTITY")
+    dependency_identities = expression_identities(text, "VAS_DEPENDENCY_IDENTITY")
     added = [a for a in listed(text) or [] if a["used"]]
     # the extracted file: imports, then each assumption's source in file order, inside its namespace. A range
     # inside another one (a structure's fields and constructor) is part of it and is not copied twice.
@@ -184,12 +217,33 @@ def main(lean_file, theorems, out_stem):
     # step 5: the extracted file compiles alone, and its conclusions are the proved statements
     check = out.with_name(out.name + ".check.lean")
     names = "[" + ", ".join(f"``conclusion_{t}" for t in theorems) + "]"
-    check.write_text(extracted + COMPARE.replace("NAMES", names))
+    dependencies = "[" + ", ".join(f"``{name}" for name in dependency_identities) + "]"
+    check.write_text(extracted + IDENTITY + COMPARE.replace("NAMES", names).replace("DEPENDENCIES", dependencies))
     status2, text2 = run_lean(check)
-    got = dict(re.findall(r"VAS_EXTRACTED conclusion_(\S+) : (.*?) VAS_END", text2, re.S))
-    same = {t: " ".join(got.get(t, "").split()) == " ".join(concl.get(t, "").split()) for t in theorems}
-    report |= {"ok": status2 == 0 and all(same.values()) and not unranged, "compiles_alone": status2 == 0,
+    extracted_identities = expression_identities(text2, "VAS_EXTRACTED_IDENTITY")
+    same = {t: bool(original_identities.get(t)) and
+            original_identities[t] == extracted_identities.get("conclusion_" + t)
+            for t in theorems}
+    extracted_dependencies = expression_identities(text2, "VAS_EXTRACTED_DEPENDENCY_IDENTITY")
+    dependencies_same = {name: value == extracted_dependencies.get(name)
+                         for name, value in dependency_identities.items()}
+    identity_hashes = {
+        t: {"original_sha256": hashlib.sha256(original_identities[t].encode()).hexdigest()
+            if t in original_identities else None,
+            "extracted_sha256": hashlib.sha256(extracted_identities["conclusion_" + t].encode()).hexdigest()
+            if "conclusion_" + t in extracted_identities else None}
+        for t in theorems}
+    dependency_hashes = {
+        name: {"original_sha256": hashlib.sha256(value.encode()).hexdigest(),
+               "extracted_sha256": hashlib.sha256(extracted_dependencies[name].encode()).hexdigest()
+               if name in extracted_dependencies else None}
+        for name, value in dependency_identities.items()}
+    report |= {"ok": status2 == 0 and all(same.values()) and all(dependencies_same.values())
+               and set(dependency_identities) == set(extracted_dependencies) and not unranged,
+               "compiles_alone": status2 == 0,
                "faithful": same, "assumption_declarations": [owner[r] for r in keep],
+               "identity_method": "kernel-expression-repr-v1", "conclusion_identities": identity_hashes,
+               "dependency_faithful": dependencies_same, "dependency_identities": dependency_hashes,
                "unranged": unranged, "added_assumptions": added,
                "conclusions_as_proved": {t: " ".join(concl[t].split()) for t in theorems},
                "extracted_file": str(out.with_suffix(".lean")),

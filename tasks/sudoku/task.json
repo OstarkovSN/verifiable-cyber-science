@@ -1,1 +1,0 @@
-{"title": "Sudoku: the puzzle has exactly one solution", "imports": ["Mathlib.Data.Fintype.Fin"], "required": ["exactly_one"]}

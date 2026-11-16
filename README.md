@@ -1,38 +1,15 @@
-# VerifiableCyberScience research harness
+# VerifiableCyberScience
 
-Local scientist-agent runs with Lean proof checking, assumption extraction and inspectable attempt logs. This is the existing research harness source, not an installable browser or CLI plugin package.
+Human-in-the-loop Bayesian modeling and Lean verification. The complete workflow is in [PROTOCOL.md](PROTOCOL.md). Scientist instructions and the natural-language task are versioned in [protocols/v1](protocols/v1).
 
-## Setup
+## Setup and operation
 
-Install Python 3 and the requirements with `python3 -m pip install -r requirements.txt`. Install elan, then run `lake update` and `lake exe cache get`. Lean and Mathlib versions are pinned in `lean-toolchain`, `lakefile.toml` and `lake-manifest.json`.
-
-Use your own normal Claude Code or Codex CLI login. This code does not include credentials. The recorded agent models and CLI versions are in `agents/config.json`; those historical pins must be reviewed against your installed versions before new runs.
-
-## Commands
-
-- `python3 src/vas_agent.py --help`: run an agent on a task in an isolated git worktree and retain its attempts.
-- `python3 src/vas_check.py --help`: check submitted proofs and record Lean output and added assumptions.
-- `python3 src/vas_extract.py --help`: extract assumptions and theorem statements for review.
-- `python3 src/vas_trail.py --help`: generate the proof-attempt report.
-- `python3 tools/readable_agent_traces.py`: export saved agent transcripts from `artifacts/vas-agent-runs` as readable HTML. Raw transcripts are supplied separately and are not included in this repository.
-
-The code accepts a proof only after its configured checks, including a separate kernel recheck. Conditional results list added assumptions. A researcher still judges whether definitions, assumptions and conclusions express the intended scientific question. The proposed end-to-end experiment workflow and the older task-card runs are different stages of the project.
-
-## Controls
-
-`python3 -m unittest discover -s tests -p 'test_vas_check.py' -v` runs checker controls, including deliberately invalid and conditional proofs. `python3 -m unittest discover -s tests -p 'test_vas_extract.py' -v` exercises extraction. These require the pinned Lean libraries and can be slow.
-
-This private source snapshot excludes unpublished paper text, credentials, session metadata and raw agent transcripts. Original code provenance is recorded in `SOURCE.json`.
-
-## Balls protocol v1 (new workflow)
-
-This workflow implements an agent-written Bayesian model, rather than the fixed
-cards used for the original paper runs. It has **not** been run on the scientific
+The scientist proposes and revises its own Bayesian model. It has **not** been run on the scientific
 balls task. The protocol contains the user's question and instructions, with no
 preset prior, parameters, worked solution or expected answer.
 
 From this checkout, `uv sync --group dev` installs the locked Python dependencies.
-Docker, the existing native Codex **0.166.0** subscription login, Lean **4.35.0**,
+Only the native Codex launcher is implemented; there is no Claude launcher. Docker, the existing native Codex **0.166.0** subscription login, Lean **4.35.0**,
 and the pinned Mathlib cache are prerequisites. The launcher uses the locally
 available image ID
 `sha256:c0e8df9380519cf514d5fbb5aeaa7aa5de5f32c50330badcadc05cdabaae5566`
@@ -44,9 +21,10 @@ When a scientist run is authorized, this single command starts it:
 uv run vcs-protocol start --run-dir artifacts/balls/run-001 --library-root /path/to/pinned-cache-checkout
 ```
 
+The requested model defaults to `gpt-6.1-sol` with `medium` reasoning. Override with `--model` and `--reasoning-effort`; both are recorded in run state and review provenance. Provider availability is checked only by an authorized run; these settings have not been tested through scientist inference.
+
 `--library-root` defaults to this checkout. It must have `.lake/packages` built
-against the exact release `lake-manifest.json`. On the implementation machine,
-`/home/claude/lair/vas` has that cache. Only package build libraries are mounted,
+against the exact release `lake-manifest.json`. Only package build libraries are mounted,
 not that checkout's tasks, proofs, instructions, artifacts or source history.
 The installed native binary is discovered from the normal npm Codex installation;
 `--codex-binary` can supply its path explicitly. `--auth-file` defaults to the
@@ -65,6 +43,8 @@ must be repaired using the normal host login, then the run resumed. The scientis
 container has network access for its subscription client; this is a filesystem
 boundary, not a network destination firewall or a sandbox against a malicious
 Docker administrator. No additional agents or paid services are started.
+
+Real host verification errors or incomplete submissions automatically return feedback to a fresh scientist context, for at most three cycles per start/resume invocation. The feedback and traces are retained. Exhausting this bound stops for explicit resume; client failures never retry automatically.
 
 The process stops for input or review. These operations do not launch inference:
 

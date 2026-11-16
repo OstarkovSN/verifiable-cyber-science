@@ -1,1 +1,0 @@
-{"title": "Balls in a box, with the draws as a function: Bayesian prediction of the next draw", "imports": [], "required": ["prior_matches_moments", "ten_black_probability", "next_black_given_count", "next_black_probability"]}
