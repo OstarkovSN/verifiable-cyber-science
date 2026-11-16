@@ -26,7 +26,7 @@ The requested model defaults to `gpt-6.1-sol` with `medium` reasoning. Override 
 `--library-root` defaults to this checkout. It must have `.lake/packages` built
 against the exact release `lake-manifest.json`. Only package build libraries are mounted,
 not that checkout's tasks, proofs, instructions, artifacts or source history.
-The installed native binary is discovered from the normal npm Codex installation;
+The native CLI and its `codex-code-mode-host` terminal companion are mounted together and their hashes recorded. The installed native binary is discovered from the normal npm Codex installation;
 `--codex-binary` can supply its path explicitly. `--auth-file` defaults to the
 normal CLI's `CODEX_HOME/auth.json` or `~/.codex/auth.json`.
 

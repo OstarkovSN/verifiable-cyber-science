@@ -218,8 +218,9 @@ def runtime_config(library_root, codex_binary, auth_file):
     lean = Path(os.environ.get("ELAN_HOME", str(Path.home() / ".elan"))) / "toolchains" / toolchain_name
     codex = Path(codex_binary) if codex_binary else native_codex()
     auth = Path(auth_file) if auth_file else Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex"))) / "auth.json"
+    code_mode_host = codex.with_name("codex-code-mode-host")
     # Inspect metadata only. Never load credential values into Python or logs.
-    for p in [lean / "bin/lean", lean / "bin/leanchecker", codex, auth]:
+    for p in [lean / "bin/lean", lean / "bin/leanchecker", codex, code_mode_host, auth]:
         if not p.is_file():
             raise ValueError(f"required native dependency missing: {p}")
     version = subprocess.check_output([str(codex), "--version"], text=True).strip()
@@ -233,7 +234,9 @@ def runtime_config(library_root, codex_binary, auth_file):
     subprocess.run(["docker", "image", "inspect", IMAGE], check=True, capture_output=True)
     import click as click_module
     return {"image": IMAGE, "lean": str(lean.resolve()), "codex": str(codex.resolve()),
-            "codex_version": version, "codex_sha256": digest(codex), "auth": str(auth.absolute()),
+            "codex_version": version, "codex_sha256": digest(codex),
+            "code_mode_host": str(code_mode_host.resolve()), "code_mode_host_sha256": digest(code_mode_host),
+            "auth": str(auth.absolute()),
             "libraries": [str(p) for p in libraries], "click": str(Path(click_module.__file__).parent),
             "lean_version": subprocess.check_output([str(lean / "bin/lean"), "--version"], text=True).strip()}
 
@@ -264,6 +267,7 @@ def docker_base(config, work, scientist=False):
         cmd += mount(lib, f"/harness/.lake/packages/{package}/.lake/build/lib/lean")
     if scientist:
         cmd += mount(config["codex"], "/usr/local/bin/codex")
+        cmd += mount(config["code_mode_host"], "/usr/local/bin/codex-code-mode-host")
         # Bind only native auth; destination parent is created by Docker, HOME is tmpfs.
         cmd += mount(config["auth"], "/native-auth/auth.json")
         cmd += mount(ROOT / "protocols/v1", "/protocol")
@@ -487,8 +491,9 @@ def resume(run):
         raise click.ClickException("resume requires rejection, supplied input or a failed/incomplete cycle")
     if digest(ROOT / "protocols/v1/instructions.txt") != state["protocol_sha256"] or digest(ROOT / "protocols/v1/task-balls.txt") != state["task_sha256"]:
         raise click.ClickException("protocol changed; start a new run")
-    if digest(state["runtime"]["codex"]) != state["runtime"]["codex_sha256"]:
-        raise click.ClickException("Codex binary changed; start a new run")
+    if (digest(state["runtime"]["codex"]) != state["runtime"]["codex_sha256"] or
+            digest(state["runtime"]["code_mode_host"]) != state["runtime"]["code_mode_host_sha256"]):
+        raise click.ClickException("Codex runtime binary changed; start a new run")
     try:
         checked_history(run, state)
     except ValueError as exc:

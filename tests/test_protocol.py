@@ -148,6 +148,10 @@ def test_real_docker_isolation(runtime, tmp_path):
            "import sys; sys.stdout.write(sys.stdin.read())"]
     result = p.run_container(cmd, input=prompt, capture_output=True, text=True, timeout=60)
     assert result.returncode == 0 and result.stdout == prompt, result.stderr
+    # The CLI's terminal tool is a companion executable, not part of codex itself.
+    cmd = p.docker_base(runtime, work, scientist=True) + [p.IMAGE, "codex-code-mode-host", "--help"]
+    result = p.run_container(cmd, capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0 and "--listen" in result.stdout, result.stderr
 
 
 @pytest.mark.parametrize("kind,expected", [("valid", "proved"), ("invalid", "not_proved"), ("axiom", "proved_if"), ("sorry", "proved_if")])
@@ -446,7 +450,8 @@ def test_mutated_review_receipt_blocks_resume_before_model(tmp_path, monkeypatch
     codex = tmp_path / "native-codex"
     codex.write_text("control native binary")
     state = p.load_state(run)
-    state.update(runtime={"codex": str(codex), "codex_sha256": p.digest(codex)},
+    state.update(runtime={"codex": str(codex), "codex_sha256": p.digest(codex),
+                          "code_mode_host": str(codex), "code_mode_host_sha256": p.digest(codex)},
                  protocol_sha256=p.digest(p.ROOT / "protocols/v1/instructions.txt"),
                  task_sha256=p.digest(p.ROOT / "protocols/v1/task-balls.txt"))
     p.write_json(run / "control/state.json", state)
@@ -457,6 +462,7 @@ def test_mutated_review_receipt_blocks_resume_before_model(tmp_path, monkeypatch
     monkeypatch.setattr(p, "execute_cycle", lambda *args: model_calls.append(args))
     result = CliRunner().invoke(p.main, ["resume", str(run)])
     assert result.exit_code != 0
+    assert "human decision changed" in result.output
     assert model_calls == []
 
 
