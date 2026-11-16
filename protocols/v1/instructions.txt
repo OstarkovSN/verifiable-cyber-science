@@ -1,0 +1,21 @@
+Balls protocol v1 — new scientific workflow, distinct from the original paper runs.
+
+1. Formulate a Bayesian model yourself. Separate facts supplied by the user from choices or extra assumptions you introduce. Do not silently turn population moments into a fully specified prior.
+2. If the information does not determine a unique answer, explain why and give a conditional answer with its assumptions exposed. You may revise the model and conclusion across attempts; preserve the reasons and lineage.
+3. Write a substantive Lean proof for the model, observation, Bayesian update and next-draw prediction. A proof of arithmetic for a number calculated elsewhere is insufficient. The human will assess scientific relevance and whether the proof covers the actual inference.
+4. Request literature, calculations, experiments or clarification when useful. Use the request tool below, stop for a real response, and incorporate the response with its source and limitations. Never invent an external response.
+5. Run the actual check tool. Read and fix its real errors, retrying without replacing science with a smaller unrelated theorem. Preserve model changes and raw traces.
+6. You may introduce additional premises or axioms, but expose them for review. Any sorry or additional axiom is conditional, never an unconditional full pass. Lean correctness does not establish the truth of the premises.
+7. Extract definitions, constants, data, assumptions and the exact conclusions. The harness independently compiles and compares the extracted statements and runs a separate kernel check. A failed or unknown check is not success.
+8. A human reviews the actual content and may accept or reject it with feedback. If the researcher rejected the assumptions or conclusions, the agent was prompted to revise its model, assumptions, conclusions and proof in response to the feedback. Never accept your own result or claim human approval.
+
+Isolation rule: work only from this task, these instructions, native installed libraries, and the run's own history and supplied responses. Do not seek previous solutions, task-specific proofs, preset prior families or parameters, or expected answers. Authentication metadata is mounted only because the native Codex client needs its existing subscription login; it is not scientific evidence. Do not read, print, copy or modify authentication files. Never use paid APIs, API-key fallback, other agents, or external services requiring payment. Stop on subscription quota/authentication errors.
+
+Tools (run in the terminal):
+  python /harness/src/vcs_protocol.py tool check --manifest /work/candidate.json
+  python /harness/src/vcs_protocol.py tool request --kind literature --question '...'
+Kinds are literature, calculation, experiment, clarification. A request stops this cycle; the operator supplies an answer and resumes. Record incorporated response IDs in the candidate. Evidence is user/external supplied and not guaranteed true.
+
+Write /work/candidate.json with this shape (all paths relative to /work):
+{"proof_file":"Model.lean", "narrative_file":"report.txt", "conclusions":{"model":"model_theorem", "update":"update_theorem", "prediction":"prediction_theorem"}, "user_facts":["..."], "model_choices":["..."], "sources":["..."], "incorporated_inputs":[], "proof_scope":"What the theorems actually establish and what is left to human review"}
+All three roles must name actual, distinct Lean theorem declarations. Use plain top-level `theorem name : statement := proof` declarations, with all binders inside `statement`. Imports must be explicit `import Mathlib.…` lines at the start of the file; imports of project/task files are unavailable. The restricted proof language supports definitions, structures, lemmas, axioms and sorry but no executable metaprogramming, custom syntax, namespaces, native_decide, IO or unsafe code. Check feedback gives concrete unsupported syntax errors. Native Mathlib tactics are available. Explain any restriction that prevents a scientifically meaningful formalization; do not pretend a narrower result meets the task.
