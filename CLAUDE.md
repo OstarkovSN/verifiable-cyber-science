@@ -20,3 +20,6 @@
 - Token-refresh errors against intentionally read-only credentials are authentication failures requiring owner login repair; `client_failure_kind` must ignore ordinary scientific/tool text mentioning authentication or quota.
 - `tests/test_custom_protocol.py:custom_run` scopes setup-only `runtime_config` stubs with `monkeypatch.context()` so opt-in Docker visibility checks use the real pinned native runtime.
 - Matrix children can exit zero with `scientist_failed`, `awaiting_input` or `awaiting_review`; read host-owned `control/state.json` through `current_state`/`status_result` to identify checkpoints, which still require explicit human scientific review.
+- `lake.py:calibration_data` camera false-positive trials are per taxon × size bin: a Poisson false-count rate λ corresponds to at-least-one probability `1 - exp(-λ)` in that same observation unit.
+- `lake.py:write_export` includes the export path in operator receipt identity while keeping replayed observation bytes identical; survey IDs change observations over one fixed truth, whose fingerprint and per-export output hashes remain operator-only.
+- Root-level operator module `lake.py` is outside pytest's `src/` import path; `tests/test_lake.py` loads it with `importlib.util.spec_from_file_location` without changing runtime packaging or global `PYTHONPATH`.
