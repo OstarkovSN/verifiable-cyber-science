@@ -1,9 +1,9 @@
 {
-  "snapshot_utc": "2026-11-18T00:07:34.050762+00:00",
-  "purpose": "Working SI preparation snapshot; running and awaiting-review states are not human acceptance.",
+  "snapshot_utc": "2026-11-18T03:37:49.759434+00:00",
+  "purpose": "Eight completed scientific cycles; review authority explicit.",
   "repository": "https://github.com/OstarkovSN/verifiable-cyber-science",
   "branch": "feat/three-task-runs",
-  "reference_code_commit": "0ae2ac3a74be3c6611445094582466dfe705c507",
+  "reference_code_commit": "6867d97bd162b2b69b257ce795549d04a8a1b92a",
   "runs": [
     {
       "run": "balls-codex",
@@ -46,7 +46,8 @@
             "time": "2026-11-17T13:02:35.850651+00:00",
             "verification_verdict": "proved"
           },
-          "decision_sha256": "cc9ada959bc0a3b00e4ecdd5c4d933d64fc58845b1bea106ebeccae3818ff742"
+          "decision_sha256": "cc9ada959bc0a3b00e4ecdd5c4d933d64fc58845b1bea106ebeccae3818ff742",
+          "review_authority": "personal user review in TUI"
         }
       ],
       "latest_attempt_provenance": {
@@ -65,6 +66,10 @@
       "requested_client": {
         "model": "gpt-6.1-sol",
         "reasoning_effort": "medium"
+      },
+      "current_resources": {
+        "memory": null,
+        "cpus": null
       }
     },
     {
@@ -108,7 +113,8 @@
             "time": "2026-11-17T13:47:13.683296+00:00",
             "verification_verdict": "proved"
           },
-          "decision_sha256": "f9b20bda8ccca7c7427081b6c3df9f9d69baf2eff9720363206c3c602a514650"
+          "decision_sha256": "f9b20bda8ccca7c7427081b6c3df9f9d69baf2eff9720363206c3c602a514650",
+          "review_authority": "personal user review in TUI"
         }
       ],
       "initial_clarification": {
@@ -136,12 +142,16 @@
         "client_version": "2.1.325 (Claude Code)",
         "model": "claude-sonnet-5-5",
         "reasoning_effort": "medium"
+      },
+      "current_resources": {
+        "memory": null,
+        "cpus": null
       }
     },
     {
       "run": "lake-codex",
-      "status": "awaiting_review",
-      "cycles": 2,
+      "status": "accepted",
+      "cycles": 3,
       "inputs": {
         "task": {
           "file": "inputs/lake-codex-task.txt",
@@ -155,10 +165,32 @@
       "attempts": [
         {
           "attempt": "attempt-001",
-          "status": "awaiting_review",
+          "status": "rejected",
           "binding": "0d722d7336eeafbe4fd222e87f0c3e6e6c6039577447a0a75e9229d644094137",
           "binding_verified": true,
-          "verification_verdict": "proved"
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "reject",
+            "reason": "Operator scientific review under the user's instruction to finish the remaining cycles.\n\nThe submitted normalization and nonidentification theorems are useful, but the task asks for a worked inference of species and population distributions from the supplied synthetic survey. H_i and prior weights are still entirely unspecified, so the candidate produces no fitted example. Revise toward a substantive conditional prediction with actual parameter inference and count distributions, keeping ambiguity/identifiability as a limitation rather than replacing the task with a generic Bayes normalization theorem. You may introduce reasonable explicit modeling assumptions; the purpose is a clear demonstration, not an exact census.\n\nThe user's rule for species-presence probabilities is: derive them from supporting statistics/evidence, or explicitly assume 100% presence for the relevant modeled taxa. Do not insert arbitrary 10/50/90% presence priors as if they were supported probabilities. Any 100% presence choice must be exposed as a scientific scenario assumption, not presented as a discovery from these noisy observations. Do not drop observed reference taxa. If a law is described as conditional on presence, ensure that its total species count is actually positive, or calculate actual P(N>0) rather than the weight of an overlapping mixture component.\n\nUse the observation and calibration records to derive identifiable parameters and expose the remaining field/calibration-transfer assumptions. Do not assume a computed result as an input. Respect repeated encounters, nested DNA sampling and false positives; pooled encounter totals are not unique fish and per-view false-label counts need not be bounded by one. Include sources and validation for the observation family and units.\n\nKeep the requested total consistent with the modeled universe. An exhaustive reference panel or full mapped coverage can be an explicit additional idealization for a worked example; an estimate over a subset is not automatically a proved whole-lake lower bound. Derive the chosen Bayesian update, normalization and scientifically meaningful final distributions/numerical conclusions in Lean. Keep the review boundary concise and readable and the technical derivations in lemmas.\n\nThis rejection records delegated operator review, not personal user acceptance/rejection of every additional detail. No other scientist's result or model has been supplied.\n",
+            "time": "2026-11-18T01:49:25.604397+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "1413e1ee218338be1bf8d8e9c177fbd55c240a90e6edae024fddc5c826d3c24d"
+        },
+        {
+          "attempt": "attempt-002",
+          "status": "accepted",
+          "binding": "4afba4784a0293bdd087e5776e8b3e9979a09b8d0ae90c49ef0aa8fdd8c801bd",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "accept",
+            "reason": "Delegated operator scientific review under the user goal to finish the remaining cycles. Accept the exact conditional species-count and total-count probability laws in answer_distributions for the explicit eight-species/exhaustive-area scenario. The supplied camera and fixture arrays and geometric totals have been independently matched against the original synthetic observation bundle. The theorem derives the calibrated Bayesian species marginals and joint total pushforward, positivity and normalization from the actual arrays, fixed priors, observation kernels and transfer assumptions. Presence100% is an explicit scenario assumption with positive count support, satisfying the user correction; no arbitrary inferred presence probabilities or omitted panel taxa. Repeated encounters and false labels remain possible and calibration uncertainty is integrated. Exact fixture-to-field transfer, homogeneous density, size weights, fixed support and reduced camera-only likelihood are exposed empirical model assumptions accepted for this illustrative worked example. This acceptance covers the exact formal distributions, not the floating decimal mean/credible-interval table or empirical model adequacy. No physical measurements were made. Verdict proved and standalone extraction faithful; no added axioms or sorry. This is operator review delegated by the user, not a claim of personal user inspection of this revision.",
+            "time": "2026-11-18T02:12:13.847928+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "8bbce28cdbdfe263ea1cdb190e422966ea5f33ea29e43de325625e8962f96549",
+          "review_authority": "orchestrating assistant under explicit user delegation"
         }
       ],
       "latest_attempt_provenance": {
@@ -171,7 +203,6 @@
         "requested_reasoning_effort": "medium",
         "memory": "3g",
         "cpus": "2",
-        "code_mode_host_sha256": "657f4e902726e05867c937b583049d5997e057f8cd0ab40450633c9c9ef8d630",
         "library_manifest_sha256": "9e10a38d592324e664c1cb74b7fe00473782bff3940506d50f8e59059549f328",
         "checker_sources": {
           "vcs_protocol.py": "7ff4ba4c5fac40335c1575ab5d0f26bc58860e3bf247ff6cc0f631cccd9f2cc5",
@@ -187,12 +218,16 @@
         "reasoning_effort": "medium",
         "memory": "3g",
         "cpus": "2"
+      },
+      "current_resources": {
+        "memory": "3g",
+        "cpus": "2"
       }
     },
     {
       "run": "lake-claude",
-      "status": "running",
-      "cycles": 5,
+      "status": "accepted",
+      "cycles": 8,
       "inputs": {
         "task": {
           "file": "inputs/lake-claude-task.txt",
@@ -245,6 +280,49 @@
             "verification_verdict": "proved"
           },
           "decision_sha256": "a86bb6bd040559cdb2f65333e11bd3ff7fedaebb3fe798e27f2405ab0c840a5d"
+        },
+        {
+          "attempt": "attempt-004",
+          "status": "rejected",
+          "binding": "a0c7640129a98ac475ab59cd4ac9ce2cf171d5f75c3ae57507eea3298d3efd74",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "reject",
+            "reason": "User instruction: species-presence probabilities must either be derived from supporting statistics/evidence or be explicitly assumed to be 100%. The 10%, 50%, 90% scenario presence priors are not an approved substitute. Revise accordingly; do not relabel an arbitrary prior as an estimate. If using 100%, expose it as a modeling assumption for the relevant named taxa, not a discovery established by the observations. Keep every observed taxon represented.\n\nOperator review of this same candidate, under the user's instruction to finish the remaining cycles:\n\n1. The Bernoulli present component is described as N>0, but each conditional cell prior is geometric on {0,1,...}. Consequently all cells can be zero even in that component. Your pres function computes the weight of a component, not necessarily P(actual species count>0). Make the claimed meaning agree exactly with the distribution and prove any conditioning/normalization needed. An explicitly assumed 100% presence must not still allocate probability to a zero total for that species while calling its occurrence certain.\n\n2. The camera inputs are target encounters pooled across views/passes, not distinct fish or one binary false-positive event per view. Binomial(N,p) with those encounter totals ignores repeat encounters. Conversely Binomial(6,phi) for false-label counts makes >6 labels impossible and mechanically forces perch/roach presence to exactly1. The simulator did not establish that six views cannot generate more than six false labels. Use an observation family that fits the recorded counting design, or give justified explicit scenario assumptions and an honest treatment of this limitation. Do not obtain certainty from an invented counting cap.\n\n3. Retain false-label contributions consistently when a species is present as well as when it is absent, or justify and bound their neglect for the claimed approximation. Keep calibration trials, field-transfer assumptions and repeated/nested observations distinct.\n\n4. The original target is the lake's species and total population. Your current sum covers only eight panel taxa and three mapped strata. If you use an exhaustive-panel/mapped-area idealization to make a worked example, state it explicitly as an additional assumption and carry it through the final statement. Do not describe that conditional sum as a lower bound on the actual whole-lake population without proving the connection.\n\n5. Preserve the substantial derived Bayesian update, normalization, population distributions and Lean numerical conclusions. Derive parameters from the supplied calibration/observations where identified, and expose any remaining justified assumptions. Sensitivity calculations can supplement a scientific answer, but unsupported scenario numbers are not evidence for presence. Explain the revised review boundary plainly and keep the final result compact.\n\nThis rejects attempt004 as a scientifically acceptable answer despite its proved formal verdict. This review consists of the user's specific correction plus operator findings made under delegated review; it is not a claim that the user personally reviewed these additional points. No scientific acceptance is given.\n",
+            "time": "2026-11-18T01:47:17.058839+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "2a6c060e8c1c56262de11b64485a11f08f6ae313b6853bddaf8f2b06f9616520"
+        },
+        {
+          "attempt": "attempt-005",
+          "status": "rejected",
+          "binding": "e4fae5baab5c40b7a7c4024a0d04b0502f29bf596fced597a3465223366a0441",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "reject",
+            "reason": "Delegated assistant scientific review under the user goal to finish the remaining cycles. Formal host verdict is proved with faithful extraction, but this candidate is rejected as an answer to the requested whole-lake task. This is not a claim of personal user inspection.\n\nThe revision fixes the requested presence=1 meaning by conditioning actual species counts on N>=1, retains all eight observed/reference taxa, permits repeated encounters, and derives population laws and numerical moments. Preserve that work.\n\nRemaining task-scope problem: the original task requests the lake's total population. The report and candidate explicitly answer only eight panel taxa in three mapped strata and say it is not the whole-lake population. This does not finish that question. Either represent the remaining taxa/habitat in the inferred total, or explicitly adopt and expose an exhaustive-universe/mapped-coverage idealization and derive the whole-lake total conditional on it. The panel is not observational proof of completeness. No peer scientist answer or model is being supplied by this option, which was already stated in the prior review.\n\nPresence claims must match the selected option. All eight presences are assumed with probability1, not inferred by the formal count model. Python Bayes factors do not by themselves imply posterior presence probabilities without prior odds. The concluding report sentence saying perch/roach present with near-certainty, ruffe probably and others undetermined should be removed or replaced by the actual conditional inventory. It currently mixes an assumed certain-presence model with unsupported probability conclusions. Optional informal occurrence evidence must not be presented as the formal species result.\n\nCorrect the false-label explanation. The actual camera totals in Model.lean are39perch and26roach, not37\u201339for both. With fp=2 in each row, the assumed aggregate mean of false labels is6cells*6views*(2+1)/202=54/101=0.53465, about1.37% and2.06% of the respective observed counts. These are expected-label comparisons under the chosen transfer model, not bounds on abundance error or a proof that false labels are absent. The formal perch/roach approximation conditions all recorded labels to be true (the all-zero-false-label component); expose that approximation accurately. State that converting binary calibration-positive fractions into a field false-label mean is a modeling/transfer approximation rather than an exact measured event rate. Rare-taxon true/false alternatives and positive conditioning should remain.\n\nThis is a focused scientific/reporting correction. Do not discard the actual Bayesian count derivation or replace it by unsupported population numbers. Do not invent new survey observations or a calibrated field response. The proof's substantive output can remain if its universe is made explicit and its claims are stated accurately. Record the actual host verdict and maintain every previous attempt and diagnostic.\n\n\nThe actual host check for attempt005 is proved and retained. Preserve its substantive mathematical derivation. For these focused changes, do not add new experiments or discard the population inference. Correct the report title/lineage to the current revision. Local tool checks need not be repeated solely for report/manifest or comment corrections when the proved mathematical source is retained; the host will independently check the next frozen packet. Do not claim a new check ran if it did not. If substantive proof code changes, verify the actual new code. No new acceptance is given.",
+            "time": "2026-11-18T03:11:25.248163+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "327c571c22b386665a918c42f019ba606ef19ee8964bfa2e3b694f2c2a6e79c3"
+        },
+        {
+          "attempt": "attempt-006",
+          "status": "accepted",
+          "binding": "2add6396429883594e25774337df23d359e6c84c93177dd25dd7f3788f1d7320",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "accept",
+            "reason": "Accepted by the orchestrating assistant under explicit user delegation to finish the remaining cycles, not personal user inspection of this revision. The agent final manifest explicitly assumes an exhaustive eight-taxon universe and complete mapped-stratum coverage, making its derived total the whole-lake count conditional on that idealisation. All eight taxa are explicitly assumed present with probability1; positive conditioning actually removes zero species counts, and no posterior occurrence probabilities are inferred from the informal Bayes factors. The count likelihood permits repeated encounters and unbounded false-label counts, with rare-taxon false/true alternatives retained. The all-zero-false-label conditional approximation for perch/roach, calibration-to-field conversion, density hyperprior, scenario transfer, independence and geometry assumptions remain exposed and are accepted for this illustrative model. The observed camera arrays, false-positive totals and exact geometry/exposure were independently matched to the supplied synthetic JSON; nominal Wilson diagnostics were independently checked without claiming formal confidence coverage or field-transfer validation. Lean proves the cell Bayesian posterior, species and total probability laws with moments, and actual numerical population mean/variance bounds in the three scenarios. Source Model.lean is unchanged from the independently proved prior candidate; this new frozen packet also independently passed host Lean/kernel/extraction checks, with no added axioms/sorry and faithful declaration identities. Two residual narrative errors have been corrected in a separately attributed operator reading copy, with original report and proof preserved: the stale panel-only quantity paragraph is reconciled with the agent-authored final whole-lake idealisation, and the odds identity uses posterior odds rather than probability. That copy, hashes and exact diff are in control/operator-validation-attempt-006 and accompany the accepted evidence. These edits add no new model assumption or proof. No real field measurement, unconditional census, calibrated detection transfer, unproved Bayes-factor calculation or physical-accuracy guarantee is accepted as a proved result. Original attempts, traces, failed checks and all reviews remain retained.",
+            "time": "2026-11-18T03:36:46.921537+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "976bdf8a7767b81511a94343fe7fbd455ea57037c655317d540b6f7e481eabb2",
+          "review_authority": "orchestrating assistant under explicit user delegation"
         }
       ],
       "latest_attempt_provenance": {
@@ -255,7 +333,7 @@
         "client_sha256": "0dc4f4a9a165fc60746d7ae8489712e5fc352f1e7ad4eb22e7141bd0812eb0cf",
         "requested_model": "claude-sonnet-5-5",
         "requested_reasoning_effort": "medium",
-        "memory": "3g",
+        "memory": "6g",
         "cpus": "2",
         "library_manifest_sha256": "9e10a38d592324e664c1cb74b7fe00473782bff3940506d50f8e59059549f328",
         "checker_sources": {
@@ -272,12 +350,16 @@
         "reasoning_effort": "medium",
         "memory": "3g",
         "cpus": "2"
+      },
+      "current_resources": {
+        "memory": "6g",
+        "cpus": "2"
       }
     },
     {
       "run": "salt-codex",
-      "status": "awaiting_input",
-      "cycles": 6,
+      "status": "accepted",
+      "cycles": 9,
       "inputs": {
         "task": {
           "file": "inputs/salt-codex-task.txt",
@@ -344,6 +426,21 @@
             "verification_verdict": "proved"
           },
           "decision_sha256": "33d962c571585e17406b687302cc543fe6b6d23a83dd1f6a993e412a102c56e3"
+        },
+        {
+          "attempt": "attempt-005",
+          "status": "accepted",
+          "binding": "137491ee8b07495ee919814eb7a41c5fc1c03dcc3cc655fe28a905bf8688564b",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "accept",
+            "reason": "Accepted by the orchestrating assistant under the user instruction to finish the remaining cycles, not personal user inspection of this revision. Accept the conditional10g NaCl worked example in salt_timing_answer. Primary Parker capacity and enthalpy inputs match the retained original-page/CSV evidence; independent exact rational arithmetic reproduces both fitted parameter triples and the107.5J/mol conservative margin. The source computes rational-family parameters from calorimetry, derives the composition blend and full-interval capacity/enthalpy inequalities, then derives positive variable component storage, the mixing sign, the net-power change from the common loss law, and the time comparison from inverse first-law balances. It does not assume the desired timing optimum or a prechosen Cs sign. The chosen rational empirical family, affine composition behavior and extension from20..30C calibration to19..100C are explicit model assumptions, accepted for this illustrative qualitative demonstration without any claim of certified physical extrapolation accuracy. Nominal literature inputs, water-capacity lower guard, nonnegative solid sensible increment, phase brackets, complete liquid dissolution/mixing solvability, and lumped apparatus premises remain exposed. This is not an Archer/IAPWS uniform material certificate, a physical experiment, a measured saving or a universal answer for unspecified apparatus. Those limits are clearly retained in the report and candidate. Actual formal verdict proved, no added axioms or sorry, standalone extraction faithful, all dependency identities verified; immutable attempt binding checked. User accepted the general apparatus model and did not require a numerical duration. All previous rejected attempts, failed certification and diagnostics remain preserved.",
+            "time": "2026-11-18T02:40:57.877075+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "df95450211c3f95b00c6e8bdf2c6544b83c6b66d986a7c49c52e091c9a78f7f6",
+          "review_authority": "orchestrating assistant under explicit user delegation"
         }
       ],
       "latest_attempt_provenance": {
@@ -356,7 +453,6 @@
         "requested_reasoning_effort": "medium",
         "memory": "4g",
         "cpus": "2",
-        "code_mode_host_sha256": "657f4e902726e05867c937b583049d5997e057f8cd0ab40450633c9c9ef8d630",
         "library_manifest_sha256": "9e10a38d592324e664c1cb74b7fe00473782bff3940506d50f8e59059549f328",
         "checker_sources": {
           "vcs_protocol.py": "7ff4ba4c5fac40335c1575ab5d0f26bc58860e3bf247ff6cc0f631cccd9f2cc5",
@@ -372,12 +468,16 @@
         "reasoning_effort": "medium",
         "memory": "4g",
         "cpus": "2"
+      },
+      "current_resources": {
+        "memory": "4g",
+        "cpus": "2"
       }
     },
     {
       "run": "salt-claude",
-      "status": "awaiting_input",
-      "cycles": 5,
+      "status": "accepted",
+      "cycles": 6,
       "inputs": {
         "task": {
           "file": "inputs/salt-claude-task.txt",
@@ -444,6 +544,21 @@
             "verification_verdict": "proved"
           },
           "decision_sha256": "e5081a891a544349dcbd4695d952579de1ca207e8ec18caa8d6890d6f2e3632b"
+        },
+        {
+          "attempt": "attempt-005",
+          "status": "accepted",
+          "binding": "b2fa8a800d9064d5cb68454c0c665a147d02b27037d461ea799e592f53706b6c",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "accept",
+            "reason": "Accepted by delegated operator scientific review under the user goal \"finish the rest of the cycles yourself\"; this is not a claim that the user personally reviewed this new attempt. Primary ACS author supplement DOI10.1021/je8008123.s001 was independently retrieved and statically inspected: the AppCp/CpSolution formula and all six NaCl coefficients agree with the exposed Lean correlation, within the explicit decimal rounding. The source fit domain1.5..120C and mass fraction<=.261 cover the declared model. Frozen binding, proved verdict, no added axioms/gaps and exact extraction identity verified. The conditional20..50g/kg NaCl model now derives the negative capacity change, variable-capacity enthalpy/mixing comparison and immediate-addition timing inequality, using the Parker anchor with correct units and same-temperature reference conversion. Exposed water/pot capacity, crystalline capacity, relative-enthalpy and boiling-temperature guards are accepted as empirical scenario premises in this regime, not as formally certified physical-law accuracy. No physical experiment or numerical time saving is claimed. Supporting operator source validation and its file hashes are in control/operator-validation-attempt-005/validation.json.",
+            "time": "2026-11-18T01:58:59.723842+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "cb0d0c749cc2c619a75b20029369390d9937e5647c34178e81b30c788813daad",
+          "review_authority": "orchestrating assistant under explicit user delegation"
         }
       ],
       "latest_attempt_provenance": {
@@ -469,6 +584,10 @@
         "client_version": "2.1.325 (Claude Code)",
         "model": "claude-sonnet-5-5",
         "reasoning_effort": "medium",
+        "memory": "4g",
+        "cpus": "2"
+      },
+      "current_resources": {
         "memory": "4g",
         "cpus": "2"
       }
@@ -542,7 +661,8 @@
             "time": "2026-11-17T23:03:03.218139+00:00",
             "verification_verdict": "proved"
           },
-          "decision_sha256": "ecaca1e9605db8846ccf22a084f890b74f4c5a15d7fedc770d0433db30bfa969"
+          "decision_sha256": "ecaca1e9605db8846ccf22a084f890b74f4c5a15d7fedc770d0433db30bfa969",
+          "review_authority": "personal user review in TUI"
         }
       ],
       "latest_attempt_provenance": {
@@ -555,7 +675,6 @@
         "requested_reasoning_effort": "medium",
         "memory": "4g",
         "cpus": "2",
-        "code_mode_host_sha256": "657f4e902726e05867c937b583049d5997e057f8cd0ab40450633c9c9ef8d630",
         "library_manifest_sha256": "9e10a38d592324e664c1cb74b7fe00473782bff3940506d50f8e59059549f328",
         "checker_sources": {
           "vcs_protocol.py": "7ff4ba4c5fac40335c1575ab5d0f26bc58860e3bf247ff6cc0f631cccd9f2cc5",
@@ -569,6 +688,10 @@
         "client_version": "codex-cli 0.166.0",
         "model": "gpt-6.1-sol",
         "reasoning_effort": "medium",
+        "memory": "4g",
+        "cpus": "2"
+      },
+      "current_resources": {
         "memory": "4g",
         "cpus": "2"
       }
@@ -600,7 +723,8 @@
             "time": "2026-11-17T15:25:34.925967+00:00",
             "verification_verdict": "proved"
           },
-          "decision_sha256": "26b47f329d111cf94acb9bbfd44cb9f367651845763ec3ab8c1d90ed490cc1af"
+          "decision_sha256": "26b47f329d111cf94acb9bbfd44cb9f367651845763ec3ab8c1d90ed490cc1af",
+          "review_authority": "personal user review in TUI"
         }
       ],
       "latest_attempt_provenance": {
@@ -628,7 +752,19 @@
         "reasoning_effort": "medium",
         "memory": "4g",
         "cpus": "2"
+      },
+      "current_resources": {
+        "memory": "4g",
+        "cpus": "2"
       }
     }
-  ]
+  ],
+  "published_main_commit": "89f1c6e4c69bf176d06fa7617b74280bba6e3e1c",
+  "working_checkout_commit": "6867d97bd162b2b69b257ce795549d04a8a1b92a",
+  "summary": {
+    "accepted": 8,
+    "total_runs": 8,
+    "personal_user_acceptances": 4,
+    "delegated_assistant_acceptances": 4
+  }
 }
