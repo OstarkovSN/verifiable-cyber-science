@@ -268,6 +268,7 @@ def test_public_projection_has_only_requested_fields_and_keeps_native_content(tm
 
 
 def test_plain_feedback_removes_role_boilerplate_preserving_science_and_quotes():
+    assert plain_feedback("Current human task clarification:\nDerive the parameters.") == "Derive the parameters."
     text = ('Operator scientific review under the user instruction to finish the remaining cycles.\n\n'
             'Human TUI feedback: derive the parameters from the supplied SYNTHETIC observations.\n\n'
             'Human instruction, verbatim:\n"Do not assume Cs is positive."\n\n'

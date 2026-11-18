@@ -643,7 +643,7 @@ def _execute_once(run, state):
     prompt = (instructions + "\nTASK:\n" + task +
               "\nThis is cycle " + str(state["cycles"]) + ". Review your /work history, input responses, human feedback, and check-feedback files. Revise failures using the actual diagnostic output. Work in /work. Stop after a request or a checkable candidate. Do not self-approve.\n")
     if state.get("initial_feedback"):
-        prompt += "\n\n" + (run / "control/initial-feedback.txt").read_text() + "\n"
+        prompt += "\n\n" + plain_feedback((run / "control/initial-feedback.txt").read_text()) + "\n"
     context = [(item.get("time", ""), plain_feedback(item["reason"])) for item in decisions]
     context.extend((item.get("time", ""), plain_feedback(item["response"]))
                    for item in state.get("responses", []))

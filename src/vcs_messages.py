@@ -16,6 +16,7 @@ def plain_feedback(text: str) -> str:
         return f"\ufffcQUOTE{len(quotes) - 1}\ufffc"
 
     text = re.sub(r'“[^”]*”|"(?:[^"\\]|\\.)*"', protect, text)
+    text = re.sub(r"(?im)^\s*Current human task clarification:\s*", "", text)
     text = re.sub(r"(?im)^[ \t]*Human review of attempt\s+[\w-]+:\s*", "", text)
     text = re.sub(r"(?im)^[ \t]*(?:Human TUI feedback|Human TUI requests revision|Human review|Human follow-up|User instruction|Human clarification of the literature request):\s*", "", text)
     text = re.sub(r"(?im)^[ \t]*Human rejected this candidate:\s*", "", text)
