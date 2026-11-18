@@ -4,7 +4,8 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-from vcs_trace_export import ExportError, Sanitizer, export, export_run, main, parse_trace, render_run
+from vcs_trace_export import ExportError, Sanitizer, _build_run, export, export_run, main, parse_trace, render_run
+from vcs_messages import plain_feedback
 
 
 def trace(tmp_path, rows, name="trace.jsonl"):
@@ -98,22 +99,22 @@ def test_cycle_boundaries_code_feedback_and_html_escaping(tmp_path):
     assert run["messages"][0]["produced_code"][0]["content"].endswith("by decide\n")
     assert run["messages"][1]["messages"][0]["content"] == "revision"
     assert len(run["messages"][1]["messages"]) == 1
-    rendered = render_run(run)
+    rendered = render_run(run, "balls-codex", "Balls", ["Study instructions", "Task", "Initial clarification"])
     assert "<script>bad()" not in rendered
     assert "&lt;script&gt;bad()" in rendered
     assert 'href="index.html"' in rendered
     assert 'href="balls-codex.json"' in rendered
     assert run["messages"][1]["user_feedback"] == "accepted"
-    assert run["messages"][0]["user_feedback"] == spec["cycles"][0]["user_feedback"]
+    assert run["messages"][0]["user_feedback"] == "<img src=x>"
     assert "delegated assistant" not in rendered
     assert "Acceptance receipt prose" not in rendered
     assert "receipt-only-binding" not in rendered
     assert 'id="cycle-002-review" class="feedback" data-searchable>accepted</p>' in rendered
     assert "<title>Balls — Codex</title>" in rendered
-    assert "<h1>Balls</h1><p>Codex</p>" in rendered
+    assert "<h1>Balls</h1><p>Codex · model</p>" in rendered
     assert run["task"] == (tmp_path / "task.md").read_text()
-    assert '<details class=""><summary>Study instructions</summary>' in rendered
-    assert '<details class=""><summary>Initial clarification</summary>' in rendered
+    assert '<details class=""><summary>Instructions</summary>' in rendered
+    assert '<details class=""><summary>Clarification</summary>' in rendered
     assert '<div class="label">Task</div>' in rendered
     assert 'href="#cycle-001-code"' in rendered
     assert 'id="cycle-001-code"' in rendered
@@ -125,7 +126,7 @@ def test_cycle_boundaries_code_feedback_and_html_escaping(tmp_path):
 def test_acceptance_feedback_loaded_from_file_is_status_only(tmp_path):
     (tmp_path / "decision.json").write_text(json.dumps({"decision": "accept", "reason": "Private receipt prose"}))
     spec = {"id": "run", "task": "Task", "harness": "Codex", "cycles": [{"user_feedback": "decision.json"}]}
-    run = export_run(spec, tmp_path, Sanitizer())
+    run = _build_run(spec, tmp_path, Sanitizer())
     assert run["messages"][0]["user_feedback"] == "accepted"
     assert "Private receipt prose" not in json.dumps(run)
 
@@ -133,7 +134,7 @@ def test_acceptance_feedback_loaded_from_file_is_status_only(tmp_path):
 def test_sanitized_code_has_distinct_original_and_exported_hashes(tmp_path):
     (tmp_path / "Model.lean").write_text("-- generated in /home/alice/science\ntheorem answer : True := by trivial\n")
     spec = {"id": "run", "task": "Task", "harness": "Codex", "cycles": [{"produced_code": ["Model.lean"]}]}
-    run = export_run(spec, tmp_path, Sanitizer())
+    run = _build_run(spec, tmp_path, Sanitizer())
     code = run["messages"][0]["produced_code"][0]
     assert code["original_sha256"] != code["exported_sha256"]
     assert "theorem answer : True := by trivial" in code["content"]
@@ -148,8 +149,8 @@ def test_publication_omission_is_explicit_and_keeps_tool_call(tmp_path):
     run = export_run(spec, tmp_path, Sanitizer())
     events = run["messages"][0]["messages"]
     assert events[0]["input"]["command"] == "pdftotext article.pdf -"
-    assert events[1]["content"]["type"] == "publication_omission"
-    assert events[1]["content"]["doi"] == "https://doi.org/10.1234/test"
+    assert events[1]["output"] == "https://doi.org/10.1234/test"
+    assert "publication_omission" not in json.dumps(run)
     assert "A full paper body" not in json.dumps(run)
     assert 'href="https://doi.org/10.1234/test"' in render_run(run)
     spec["cycles"][0]["publication_omissions"] = {"not-found": {}}
@@ -157,7 +158,7 @@ def test_publication_omission_is_explicit_and_keeps_tool_call(tmp_path):
         export_run(spec, tmp_path, Sanitizer())
 
 
-def test_host_after_events_follow_native_messages(tmp_path):
+def test_added_host_events_are_not_published_as_conversation(tmp_path):
     path = trace(tmp_path, [{"type": "item.completed", "item": {"id": "i1", "type": "agent_message", "text": "Ready for checking"}}])
     spec = {"id": "run", "task": "Task", "harness": "Codex", "cycles": [{
         "events": [{"type": "message", "role": "user", "content": "Supplied observation"}],
@@ -165,25 +166,39 @@ def test_host_after_events_follow_native_messages(tmp_path):
         "after_events": [{"type": "host_check", "content": {"verdict": "proved"}}],
     }]}
     messages = export_run(spec, tmp_path, Sanitizer())["messages"][0]["messages"]
-    assert [m["type"] for m in messages] == ["message", "message", "host_check"]
+    assert [m["type"] for m in messages] == ["message", "message"]
 
 
 def test_mixed_article_output_retains_exact_scientist_spans(tmp_path):
     source = trace(tmp_path, [{"type": "item.completed", "item": {"id": "i1", "type": "command_execution",
         "command": "cat article.txt; cat report.txt; lean Model.lean", "aggregated_output":
         "Full article body\nSCIENTIST NOTE: heat capacity is negative here.\nCHECKER: proved\n", "exit_code": 0}}])
-    omission = {"references": ["https://doi.org/10.1234/first", "https://doi.org/10.5678/second"],
+    omission = {"doi": "https://doi.org/10.1234/first",
+                "references": ["https://doi.org/10.1234/first", "https://doi.org/10.5678/second"],
                 "retained_output": ["SCIENTIST NOTE: heat capacity is negative here.", "CHECKER: proved\n"]}
     spec = {"id": "run", "task": "Task", "harness": "Codex", "cycles": [{"traces": [source.name],
         "publication_omissions": {"trace.jsonl:i1": omission}}]}
     run = export_run(spec, tmp_path, Sanitizer())
     result = run["messages"][0]["messages"][1]
-    assert result["content"]["retained_output"] == omission["retained_output"]
+    assert isinstance(result["output"], str)
+    assert result["output"] == ("https://doi.org/10.1234/first\n\nhttps://doi.org/10.5678/second\n\n"
+                                 "SCIENTIST NOTE: heat capacity is negative here.\n\nCHECKER: proved\n")
     assert "Full article body" not in json.dumps(result)
     assert 'href="https://doi.org/10.5678/second"' in render_run(run)
     omission["retained_output"] = "A fabricated scientist note"
     with pytest.raises(ExportError, match="not an exact source span"):
         export_run(spec, tmp_path, Sanitizer())
+
+
+def test_native_structured_tool_output_is_not_treated_as_added_omission(tmp_path):
+    native = {"type": "publication_omission", "reason": "a genuine native tool response", "doi": "https://doi.org/10.1234/native"}
+    source = trace(tmp_path, [
+        {"type": "response_item", "payload": {"type": "function_call", "call_id": "c1", "name": "tool", "arguments": "{}"}},
+        {"type": "response_item", "payload": {"type": "function_call_output", "call_id": "c1", "output": native}},
+    ])
+    run = export_run({"id": "run", "task": "Task", "harness": "Codex", "cycles": [{"traces": [source.name]}]}, tmp_path, Sanitizer())
+    assert run["messages"][0]["messages"][1]["output"] == native
+    assert "a genuine native tool response" in render_run(run)
 
 
 def test_pdf_files_and_payloads_are_rejected(tmp_path):
@@ -202,7 +217,7 @@ def test_actual_cli_writes_portable_offline_pages(tmp_path):
     output = tmp_path / "public"
     result = CliRunner().invoke(main, ["--source-map", str(mapping), "--output", str(output)])
     assert result.exit_code == 0, result.output
-    assert {p.name for p in output.iterdir()} == {"run.json", "run.html", "index.html", "manifest.json"}
+    assert {p.name for p in output.iterdir()} == {"run.json", "run.html", "index.html"}
     assert 'href="run.html"' in (output / "index.html").read_text()
     assert str(tmp_path) not in (output / "run.json").read_text()
     assert "https://" not in (output / "index.html").read_text()
@@ -218,3 +233,62 @@ def test_bibliography_publishes_only_titles_and_doi_links(tmp_path):
     index = (tmp_path / "out/index.html").read_text()
     assert 'href="https://doi.org/10.1234/paper"' in index
     assert "/private/raw.pdf" not in index
+
+
+def test_public_projection_has_only_requested_fields_and_keeps_native_content(tmp_path):
+    (tmp_path / "Model.lean").write_text("theorem answer : True := by trivial\n")
+    native_output = '{"source_sha256":"historical-value","binding":"old-native-receipt"}'
+    source = trace(tmp_path, [
+        {"type": "item.completed", "item": {"id": "opaque-tool-id", "type": "command_execution", "command": "cat old-receipt.json", "aggregated_output": native_output, "exit_code": 1}},
+        {"type": "item.completed", "item": {"id": "assistant-id", "type": "agent_message", "text": "Human TUI feedback: this native message stays exact."}},
+    ])
+    spec = {"id": "test-run", "task": "Task", "harness": {"name": "Codex", "requested_model": "selected-model", "client_sha256": "private-hash"}, "cycles": [{
+        "id": "attempt-number", "traces": [source.name], "produced_code": ["Model.lean"],
+        "events": [{"type": "external_response", "timestamp": "private-time", "content": {"id": "private-id", "source_sha256": "private-hash", "response": "Human TUI feedback: derive Cs from the supplied synthetic data."}}],
+        "after_events": [{"type": "submission", "content": {"binding": "private-binding"}}, {"type": "checker_result", "content": {"source_sha256": "private-hash"}}],
+        "user_feedback": {"decision": "reject", "reason": "Human TUI feedback: prove Cs >= 0 from the model.", "review_authority": "irrelevant role", "binding": "private-binding"},
+    }]}
+    run = export_run(spec, tmp_path, Sanitizer())
+    assert set(run) == {"task", "harness", "messages"}
+    assert run["harness"] == {"name": "Codex", "model": "selected-model"}
+    cycle = run["messages"][0]
+    assert set(cycle) == {"messages", "produced_code", "user_feedback"}
+    assert set(cycle["produced_code"][0]) == {"name", "content"}
+    assert cycle["user_feedback"] == "prove Cs >= 0 from the model."
+    assert cycle["messages"][0] == {"type": "message", "role": "user", "content": "derive Cs from the supplied synthetic data."}
+    assert cycle["messages"][2]["output"] == native_output
+    assert cycle["messages"][3]["content"] == "Human TUI feedback: this native message stays exact."
+    assert cycle["messages"][1]["call_id"] == cycle["messages"][2]["call_id"] == "opaque-tool-id"
+    assert all("source" not in m and "source_line" not in m and "timestamp" not in m for m in cycle["messages"])
+    rendered = render_run(run, "test-run", "Task")
+    assert "opaque-tool-id" not in rendered
+    assert "Harness and model" not in rendered
+    assert "private-hash" not in rendered
+    assert "shell input" in rendered and "shell output · exit 1" in rendered
+
+
+def test_plain_feedback_removes_role_boilerplate_preserving_science_and_quotes():
+    text = ('Operator scientific review under the user instruction to finish the remaining cycles.\n\n'
+            'Human TUI feedback: derive the parameters from the supplied SYNTHETIC observations.\n\n'
+            'Human instruction, verbatim:\n"Do not assume Cs is positive."\n\n'
+            "No other agent's model, numerical results or proof are supplied. No scientific acceptance is given.")
+    result = plain_feedback(text)
+    assert result == 'derive the parameters from the supplied SYNTHETIC observations.\n\n"Do not assume Cs is positive."'
+    assert plain_feedback(result) == result
+    quote = '"Human TUI feedback: preserve this actual quotation."'
+    assert plain_feedback(quote) == quote
+    assert plain_feedback('Human instruction, verbatim: "Calculate Phi inside Lean. Is claude fish done?"') == '"Calculate Phi inside Lean."'
+    assert plain_feedback('"Connect the case to reality. Btw, what claude do we use? Sonnet?"') == '"Connect the case to reality."'
+    assert plain_feedback('"Can you derive the parameter?"') == '"Can you derive the parameter?"'
+
+
+def test_private_audit_is_optional_and_never_written_into_public_output(tmp_path):
+    (tmp_path / "Model.lean").write_text("theorem answer : True := by trivial\n")
+    mapping = tmp_path / "map.json"
+    mapping.write_text(json.dumps({"runs": [{"id": "run", "task": "Task", "harness": "Claude", "cycles": [{"produced_code": ["Model.lean"]}]}]}))
+    audit = tmp_path / "private/audit.json"
+    export(mapping, tmp_path / "out", audit)
+    assert audit.exists()
+    assert not (tmp_path / "out/manifest.json").exists()
+    assert "original_sha256" in audit.read_text()
+    assert "original_sha256" not in (tmp_path / "out/run.json").read_text()

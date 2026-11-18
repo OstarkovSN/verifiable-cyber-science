@@ -201,7 +201,8 @@ def test_initial_feedback_prompt_uses_host_custody_and_detects_tampering(tmp_pat
     monkeypatch.setattr(p, "run_container", client)
     p.execute_cycle(run, state)
     assert len(prompts) == 1 and text in prompts[0]
-    assert "not proof acceptance" in prompts[0] and "FORGED" not in prompts[0]
+    assert "FORGED" not in prompts[0]
+    assert "INITIAL HUMAN TASK CLARIFICATION" not in prompts[0]
     (run / "control/initial-feedback.txt").write_text("changed human source")
     p.execute_cycle(run, state)
     assert len(prompts) == 1 and state["status"] == "scientist_failed"

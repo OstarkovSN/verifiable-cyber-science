@@ -15,6 +15,8 @@ from typing import Any
 
 import click
 
+from vcs_messages import plain_feedback as clean_operator_text
+
 
 class ExportError(ValueError):
     """An input cannot be exported faithfully or safely."""
@@ -259,6 +261,88 @@ def _feedback(base: Path, value: Any) -> Any:
     return value if value is not None else []
 
 
+def public_feedback(value: Any) -> Any:
+    if value == "accepted":
+        return "accepted"
+    if isinstance(value, dict):
+        return "accepted" if value.get("decision") == "accept" else clean_operator_text(value.get("reason", ""))
+    if isinstance(value, list):
+        return "\n\n".join(public_feedback(item) for item in value)
+    return clean_operator_text(value) if isinstance(value, str) else ""
+
+
+def _publication_text(content: dict) -> str:
+    references = []
+    for key in ["doi", "references"]:
+        values = content.get(key, [])
+        for value in values if isinstance(values, list) else [values]:
+            if isinstance(value, dict):
+                value = value.get("doi", value.get("url", ""))
+            if value and value not in references:
+                references.append(value)
+    retained = content.get("retained_output", [])
+    if isinstance(retained, str):
+        retained = [retained]
+    return "\n\n".join([*references, *retained])
+
+
+def _project_messages(messages: list[dict]) -> list[dict]:
+    result = []
+    call_ids = {}
+    for message in messages:
+        if message.get("type") == "tool_call":
+            call_ids[message["call_id"]] = message.get("native_id", message["call_id"].split(":", 1)[-1])
+    for message in messages:
+        typ = message.get("type", "message")
+        if typ in {"submission", "checker_result", "host_check"}:
+            continue
+        if typ == "external_response":
+            content = message.get("content", {})
+            response = content.get("response", "") if isinstance(content, dict) else content
+            result.append({"type": "message", "role": "user", "content": clean_operator_text(response)})
+        elif typ == "message":
+            content = message.get("content", "")
+            # Initial clarification is an operator reply, not native narration.
+            if message.get("label") == "Initial clarification":
+                content = clean_operator_text(content)
+            result.append({"type": "message", "role": message.get("role", "assistant"), "content": content})
+        elif typ == "tool_call":
+            result.append({"type": "tool_call", "name": message["name"],
+                           "call_id": call_ids[message["call_id"]], "input": message.get("input", {})})
+        elif typ == "tool_result":
+            output = message.get("content", "")
+            if message.get("_publication_omission"):
+                output = _publication_text(output)
+            item = {"type": "tool_result", "call_id": call_ids.get(message.get("call_id"), message.get("call_id", "").split(":", 1)[-1]),
+                    "output": output}
+            if message.get("exit_code") is not None:
+                item["exit_code"] = message["exit_code"]
+            if message.get("is_error"):
+                item["is_error"] = True
+            if message.get("status") and message["status"] not in {"completed", "success"}:
+                item["status"] = message["status"]
+            result.append(item)
+        elif typ == "client_outcome":
+            if message.get("is_error"):
+                result.append({"type": "error", "content": message.get("errors", message.get("status", "Client error"))})
+        else:
+            result.append({"type": "error" if typ in {"client_error", "trace_diagnostic"} else typ,
+                           "content": message.get("content", "")})
+    return result
+
+
+def public_run(run: dict) -> dict:
+    native = run["harness"]
+    harness = {"name": native.get("name", "Agent")} if isinstance(native, dict) else {"name": native}
+    if isinstance(native, dict) and (native.get("model") or native.get("requested_model")):
+        harness["model"] = native.get("model", native.get("requested_model"))
+    return {"task": run["task"], "harness": harness, "messages": [
+        {"messages": _project_messages(cycle["messages"]),
+         "produced_code": [{"name": code["name"], "content": code["content"]} for code in cycle["produced_code"]],
+         "user_feedback": public_feedback(cycle["user_feedback"])}
+        for cycle in run["messages"]]}
+
+
 def _text_parts(value: Any) -> list[str]:
     if isinstance(value, str):
         return [value]
@@ -269,7 +353,7 @@ def _text_parts(value: Any) -> list[str]:
     return []
 
 
-def export_run(spec: dict, base: Path, sanitizer: Sanitizer) -> dict:
+def _build_run(spec: dict, base: Path, sanitizer: Sanitizer) -> dict:
     ident = spec["id"]
     if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]*", ident):
         raise ExportError("Run id must be a portable filename")
@@ -320,6 +404,7 @@ def export_run(spec: dict, base: Path, sanitizer: Sanitizer) -> dict:
                                   "reason": omission.get("reason", "Full article content omitted from publication"),
                                   **({k: omission[k] for k in ["doi", "source_url", "references", "retained_output"]
                                       if omission.get(k) is not None})}
+            message["_publication_omission"] = True
             applied.add(key)
         if set(omissions) - applied:
             raise ExportError(f"Publication omission does not match a tool result in {ident}/{cycle.get('id', number)}")
@@ -343,6 +428,10 @@ def export_run(spec: dict, base: Path, sanitizer: Sanitizer) -> dict:
             code["sha256"] = digest(code["content"].encode())
             code["exported_sha256"] = code["sha256"]
     return result
+
+
+def export_run(spec: dict, base: Path, sanitizer: Sanitizer) -> dict:
+    return public_run(_build_run(spec, base, sanitizer))
 
 
 STYLE = """
@@ -391,68 +480,82 @@ def page(title: str, body: str) -> str:
             f'<script>{SCRIPT}</script></body></html>')
 
 
-def render_run(run: dict) -> str:
-    ident, task = run["id"], run.get("task_title", run["task"])
+def render_run(run: dict, run_id: str = "run", task_title: str | None = None,
+               input_labels: list[str] | None = None) -> str:
+    ident, task = run_id, task_title or run["task"]
     harness = run["harness"]
     harness_label = harness.get("name", ident) if isinstance(harness, dict) else harness
     body = (f'<nav><a href="index.html">All runs</a><a href="{esc(ident)}.json" download>Download JSON</a></nav>'
-            f'<h1>{esc(task)}</h1><p>{esc(harness_label)}</p>'
+            f'<h1>{esc(task)}</h1><p>{esc(harness_label)}'
+            + (f' · {esc(harness.get("model", ""))}' if isinstance(harness, dict) and harness.get("model") else '') + '</p>'
+            +
             '<div class="controls"><input id="search" type="search" aria-label="Search this run" placeholder="Search messages, code and feedback">'
             '<button data-expand="yes">Expand all</button><button data-expand="no">Collapse all</button></div>')
-    if isinstance(harness, dict):
-        body += details("Harness and model", harness)
     body += '<nav aria-label="Cycles">' + " ".join(
-        f'<a href="#{esc(c["id"])}">{esc(c["id"])}</a>' for c in run["messages"]) + '</nav>'
-    for cycle in run["messages"]:
-        body += f'<section id="{esc(cycle["id"])}"><h2>{esc(cycle["id"])}</h2>'
-        if cycle.get("status"):
-            body += f'<p class="chip">{esc(cycle["status"])}</p>'
-        body += (f'<nav aria-label="{esc(cycle["id"])} sections">'
-                 f'<a href="#{esc(cycle["id"])}-messages">Messages</a>')
+        f'<a href="#cycle-{number:03d}">{number}</a>' for number in range(1, len(run["messages"]) + 1)) + '</nav>'
+    for number, cycle in enumerate(run["messages"], 1):
+        cycle_id = f"cycle-{number:03d}"
+        body += f'<section id="{cycle_id}"><h2>Round {number}</h2>'
+        body += (f'<nav aria-label="Round {number} sections">'
+                 f'<a href="#{cycle_id}-messages">Messages</a>')
         if cycle["produced_code"]:
-            body += f'<a href="#{esc(cycle["id"])}-code">Code</a>'
+            body += f'<a href="#{cycle_id}-code">Code</a>'
         if cycle["user_feedback"]:
-            body += f'<a href="#{esc(cycle["id"])}-review">Review</a>'
-        body += f'</nav><h3 id="{esc(cycle["id"])}-messages">Messages</h3>'
-        for message in cycle["messages"]:
+            body += f'<a href="#{cycle_id}-review">Review</a>'
+        body += f'</nav><h3 id="{cycle_id}-messages">Messages</h3>'
+        call_names = {m["call_id"]: m["name"] for m in cycle["messages"] if m.get("type") == "tool_call"}
+        for message_number, message in enumerate(cycle["messages"]):
             typ = message.get("type", "message")
             if typ == "message":
-                message_label = message.get("label", message.get("role", "Message"))
+                message_label = ((input_labels or [])[message_number]
+                                 if number == 1 and message_number < len(input_labels or [])
+                                 else message.get("role", "Message"))
                 if message_label in {"Study instructions", "Initial clarification"}:
-                    body += '<div data-searchable>' + details(message_label, message.get("content", "")) + '</div>'
+                    body += '<div data-searchable>' + details("Instructions" if message_label == "Study instructions" else "Clarification", message.get("content", "")) + '</div>'
                 else:
                     body += (f'<article class="message" data-searchable><div class="label">{esc(message_label)}</div>'
                              f'<pre>{linked_text(message.get("content", ""))}</pre></article>')
+            elif typ == "tool_call":
+                body += '<div data-searchable>' + details(message["name"] + " input", message["input"]) + '</div>'
+            elif typ == "tool_result":
+                title = call_names.get(message.get("call_id"), "Tool") + " output"
+                if message.get("exit_code") is not None:
+                    title += f' · exit {message["exit_code"]}'
+                if message.get("is_error"):
+                    title += " · error"
+                if message.get("status"):
+                    title += " · " + str(message["status"])
+                output = message.get("output", "")
+                body += '<div data-searchable>' + details(title, output) + '</div>'
             else:
-                title = (message.get("name") or typ.replace("_", " "))
-                if message.get("call_id"):
-                    title += " · " + message["call_id"]
-                body += '<div data-searchable>' + details(title, message) + '</div>'
+                body += '<div data-searchable>' + details(typ.replace("_", " "), message.get("content", "")) + '</div>'
         if cycle["produced_code"]:
-            body += f'<h3 id="{esc(cycle["id"])}-code">Produced code</h3>'
+            body += f'<h3 id="{cycle_id}-code">Produced code</h3>'
             for code in cycle["produced_code"]:
                 body += '<div data-searchable>' + details(code["name"], code["content"]) + '</div>'
         if cycle["user_feedback"] == "accepted":
-            body += f'<p id="{esc(cycle["id"])}-review" class="feedback" data-searchable>accepted</p>'
+            body += f'<p id="{cycle_id}-review" class="feedback" data-searchable>accepted</p>'
         elif cycle["user_feedback"]:
-            body += (f'<div id="{esc(cycle["id"])}-review" data-searchable>'
+            body += (f'<div id="{cycle_id}-review" data-searchable>'
                      + details("Review feedback", cycle["user_feedback"], "feedback", True) + '</div>')
         body += '</section>'
     return page(f"{task} — {harness_label}", body)
 
 
-def render_index(runs: list[dict], references: list[dict] | None = None) -> str:
+def render_index(runs: list[dict], references: list[dict] | None = None,
+                 run_details: list[dict] | None = None) -> str:
     body = ('<h1>Agent traces</h1><div class="controls"><input id="search" type="search" '
             'aria-label="Find a task or harness" placeholder="Find a task or harness"></div>'
-            '<table><thead><tr><th>Task</th><th>Harness</th><th>Agent cycles</th><th>Files</th></tr></thead><tbody>')
-    for run in runs:
+            '<table><thead><tr><th>Task</th><th>Harness</th><th>Files</th></tr></thead><tbody>')
+    for index, run in enumerate(runs):
+        context = run_details[index] if run_details else {"id": f"run-{index + 1}", "task_title": run["task"]}
         harness = run["harness"]
-        label = harness.get("name", run["id"]) if isinstance(harness, dict) else harness
+        label = harness.get("name", "Agent") if isinstance(harness, dict) else harness
         model = harness.get("model", harness.get("requested_model", "")) if isinstance(harness, dict) else ""
-        body += (f'<tr data-searchable><td><a href="{esc(run["id"])}.html">{esc(run.get("task_title", run["task"]))}</a></td>'
+        body += (f'<tr data-searchable><td><a href="{esc(context["id"])}.html">{esc(context["task_title"])}</a></td>'
                  f'<td>{esc(label)}<br><span class="label">{esc(model)}</span></td>'
-                 f'<td>{len(run["messages"])}</td><td><a href="{esc(run["id"])}.html">HTML</a> · '
-                 f'<a href="{esc(run["id"])}.json" download>JSON</a></td></tr>')
+                 f'<td><a href="{esc(context["id"])}.html">HTML</a> · '
+                 f'<a href="{esc(context["id"])}.json" download>JSON</a></td></tr>')
     body += '</tbody></table>'
     if references:
         body += '<h2>References</h2><ul>'
@@ -481,29 +584,39 @@ def read_references(path: Path, sanitizer: Sanitizer) -> list[dict]:
     return sanitizer.clean(references)
 
 
-def export(source_map: Path, output: Path) -> dict:
+def export(source_map: Path, output: Path, audit_output: Path | None = None) -> dict:
     mapping = json.loads(source_map.read_text())
     sanitizer = Sanitizer(mapping.get("replacements"), mapping.get("redactions"))
-    runs = [export_run(spec, source_map.parent, sanitizer) for spec in mapping["runs"]]
-    if len({r["id"] for r in runs}) != len(runs):
+    internal_runs = [_build_run(spec, source_map.parent, sanitizer) for spec in mapping["runs"]]
+    runs = [public_run(run) for run in internal_runs]
+    if len({r["id"] for r in internal_runs}) != len(internal_runs):
         raise ExportError("Duplicate run id")
     references = read_references(_path(source_map.parent, mapping["bibliography_file"]), sanitizer) if mapping.get("bibliography_file") else []
     # Validate all selected content before creating any publishable output.
     output.mkdir(parents=True, exist_ok=True)
     manifest = {"schema_version": 1, "runs": [], "redactions": dict(sanitizer.counts)}
-    for run in runs:
+    for run, internal in zip(runs, internal_runs):
         data = json_text(run)
-        (output / (run["id"] + ".json")).write_text(data)
-        (output / (run["id"] + ".html")).write_text(render_run(run))
-        manifest["runs"].append({"id": run["id"], "task": run["task"], "harness": run["harness"],
-                                 "json": run["id"] + ".json", "html": run["id"] + ".html",
+        ident = internal["id"]
+        (output / (ident + ".json")).write_text(data)
+        input_labels = [m["label"] for m in internal["messages"][0]["messages"] if m.get("label")]
+        (output / (ident + ".html")).write_text(render_run(run, ident, internal["task_title"], input_labels))
+        manifest["runs"].append({"id": ident, "task": run["task"], "harness": run["harness"],
+                                 "json": ident + ".json", "html": ident + ".html",
                                  "sha256": digest(data.encode()), "cycles": len(run["messages"]),
-                                 "messages": sum(len(x["messages"]) for x in run["messages"])})
-    (output / "index.html").write_text(render_index(runs, references))
+                                 "messages": sum(len(x["messages"]) for x in run["messages"]),
+                                 "sources": internal["sources"],
+                                 "code_sources": [{"cycle": c["id"], "files": [
+                                     {k: code[k] for k in ["name", "original_sha256", "exported_sha256"]}
+                                     for code in c["produced_code"]]} for c in internal["messages"]]})
+    (output / "index.html").write_text(render_index(runs, references, internal_runs))
     if references:
         (output / "references.json").write_text(json_text(references))
         manifest["references"] = "references.json"
-    (output / "manifest.json").write_text(json_text(manifest))
+    if audit_output is not None:
+        audit_output.parent.mkdir(parents=True, exist_ok=True)
+        audit_output.write_text(json_text(manifest))
+        audit_output.chmod(0o600)
     return manifest
 
 
@@ -511,10 +624,12 @@ def export(source_map: Path, output: Path) -> dict:
 @click.option("--source-map", type=click.Path(exists=True, dir_okay=False, path_type=Path), required=True,
               help="Private JSON selecting the native trace, code and review sources.")
 @click.option("--output", type=click.Path(file_okay=False, path_type=Path), required=True)
-def main(source_map: Path, output: Path):
+@click.option("--audit-output", type=click.Path(dir_okay=False, path_type=Path),
+              help="Optional private audit receipt; it is not part of the trace export.")
+def main(source_map: Path, output: Path, audit_output: Path | None):
     """Build portable scientist JSON and self-contained HTML from saved records."""
     try:
-        manifest = export(source_map, output)
+        manifest = export(source_map, output, audit_output)
     except (ExportError, OSError, KeyError, json.JSONDecodeError) as exc:
         raise click.ClickException(str(exc)) from exc
     click.echo(json.dumps({"runs": len(manifest["runs"]), "output": str(output),

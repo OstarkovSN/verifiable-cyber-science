@@ -136,6 +136,7 @@ def test_mounts_only_selected_protocol_files_and_resources(custom_run, agent):
         assert f"type=bind,src={run}/control/protocol/{name},dst=/protocol/{name},readonly" in protocol
     assert not any(f"src={run}/control," in entry or f"src={p.ROOT}/protocols," in entry for entry in mounts)
     assert "--memory=4g" in cmd and "--cpus=2" in cmd
+    assert f"type=bind,src={p.ROOT}/src/vcs_messages.py,dst=/harness/src/vcs_messages.py,readonly" in mounts
     checker = p.docker_base(fake_config(run.parent, agent), run / "control/attempt-001")
     assert "--memory=4g" in checker and "--cpus=2" in checker
     assert not any("dst=/protocol" in part or "dst=/native-auth" in part for part in checker)

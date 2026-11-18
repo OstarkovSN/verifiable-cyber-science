@@ -118,6 +118,8 @@ def test_reject_preserves_feedback(tmp_path):
     assert result.exit_code == 0
     assert p.load_state(run)["status"] == "rejected"
     assert p.read_json(run / "work/human-feedback.json")["reason"] == "model not justified"
+    assert set(p.read_json(run / "work/human-feedback.json")) == {"reason"}
+    assert p.read_json(attempt / "decision.json")["binding"] == binding
 
 
 def test_response_is_durable_and_does_not_run_model(tmp_path):
@@ -133,6 +135,8 @@ def test_response_is_durable_and_does_not_run_model(tmp_path):
     assert result.exit_code == 0, result.output
     assert p.load_state(run)["status"] == "input_received"
     assert p.read_json(run / "control/responses" / (ident + ".json"))["response"] == "operator response"
+    assert p.read_json(run / "work/inputs" / (ident + ".json")) == {
+        "response": "operator response", "source": "human clarification"}
 
 
 @pytest.fixture(scope="module")
@@ -523,6 +527,34 @@ def test_fresh_cycle_receives_host_recorded_human_feedback(tmp_path, monkeypatch
     assert len(prompts) == 1
     assert "host human says revise sampling model" in prompts[0]
     assert "forged approval" not in prompts[0]
+
+
+def test_scientist_prompt_contains_feedback_and_reply_text_without_receipt_fields(tmp_path, monkeypatch):
+    run, attempt, binding = review_fixture(tmp_path)
+    result = CliRunner().invoke(p.main, ["review", str(run), "--decision", "reject", "--binding", binding,
+                                       "--reason", "Human TUI feedback: derive the heat capacity."])
+    assert result.exit_code == 0, result.output
+    assert p.read_json(run / "work/human-feedback.json") == {"reason": "derive the heat capacity."}
+    state = p.load_state(run)
+    response_id = "1234567890abcdef" * 2
+    state.update(cycles=0, runtime={"agent": "codex"}, responses=[{
+        "id": response_id, "time": "9999-01-01", "source": "operator bookkeeping",
+        "request": {"id": response_id, "kind": "clarification"},
+        "response": "Use the measured mass and the cited specific heat."}])
+    bind_protocol(run, state)
+    prompts = []
+    monkeypatch.setattr(p, "ensure_subscription", lambda *args: None)
+    monkeypatch.setattr(p, "docker_base", lambda *args, **kwargs: ["docker", "run"])
+    def client(cmd, **kwargs):
+        prompts.append(kwargs["input"])
+        return subprocess.CompletedProcess(cmd, 9)
+    monkeypatch.setattr(p, "run_container", client)
+    p.execute_cycle(run, state)
+    assert len(prompts) == 1
+    assert "derive the heat capacity." in prompts[0]
+    assert "Use the measured mass and the cited specific heat." in prompts[0]
+    for noise in [binding, response_id, "verification_verdict", "operator bookkeeping", "HOST-RECORDED", "Human TUI feedback"]:
+        assert noise not in prompts[0]
 
 
 @pytest.mark.parametrize("prior_attempt", [False, True])
