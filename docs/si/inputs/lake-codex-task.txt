@@ -1,0 +1,3 @@
+We are standing near an unnamed lake in North Karelia, eastern Finland. Your goal is to determine which fish species are present, propose a probability distribution for the number of individuals of each species, and derive the probability distribution of the total fish population.
+
+No surveys, measurements or catches have been performed. You may propose observations or experiments and request their results. Fish must not be caught or removed from the lake.

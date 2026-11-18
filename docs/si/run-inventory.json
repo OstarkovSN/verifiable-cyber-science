@@ -1,0 +1,634 @@
+{
+  "snapshot_utc": "2026-11-18T00:07:34.050762+00:00",
+  "purpose": "Working SI preparation snapshot; running and awaiting-review states are not human acceptance.",
+  "repository": "https://github.com/OstarkovSN/verifiable-cyber-science",
+  "branch": "feat/three-task-runs",
+  "reference_code_commit": "0ae2ac3a74be3c6611445094582466dfe705c507",
+  "runs": [
+    {
+      "run": "balls-codex",
+      "status": "accepted",
+      "cycles": 2,
+      "inputs": {
+        "task": {
+          "file": "inputs/balls-codex-task.txt",
+          "sha256": "9623fbe8c4350c8a4da82c6d090ceac257b7ac14e6b250967cc1ea76fc5d1e9b"
+        },
+        "instructions": {
+          "file": "inputs/balls-codex-instructions.txt",
+          "sha256": "7ab07ecdae3f8b3f1d961fab36d825c06c766d9675bfd6947259bccbf755ea68"
+        }
+      },
+      "attempts": [
+        {
+          "attempt": "attempt-001",
+          "status": "rejected",
+          "binding": "aaa1586e22cc70295f9cebdf6f501d58cc216ce7962e90ee82f202df7d63849c",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "reject",
+            "reason": "Human rejected this candidate: it does not correspond to the intended real-world modeling task and produces no usable predictive example. Multiple possible predictions are acceptable, but proving nonuniqueness is not the intended scientific target. Revise toward a usable Bayesian prediction under an explicitly stated, scientifically justified model or distribution family, deriving its parameters from the supplied moments, observations or requested experiment results. Explain and expose additional assumptions for human review. Do not substitute contrived counterexample priors and a nonidentifiability proof for that predictive task; nonuniqueness may be reported as a limitation. Do not assume both a family and the parameter values that should be inferred.",
+            "time": "2026-11-16T16:02:39.113835+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "36aa084195475a3f75f3fa4964d3021248c1bd20f748d391fcd40c2eb327a580"
+        },
+        {
+          "attempt": "attempt-002",
+          "status": "accepted",
+          "binding": "2060bebe612c788e56e764e6b20cb8e40b2c75af95acf9acf7900bd225f8d64e",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "accept",
+            "reason": "Human review in TUI: defs and axioms are ok and the conclusion is what I wanted. Accepted.",
+            "time": "2026-11-17T13:02:35.850651+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "cc9ada959bc0a3b00e4ecdd5c4d933d64fc58845b1bea106ebeccae3818ff742"
+        }
+      ],
+      "latest_attempt_provenance": {
+        "image": "sha256:c0e8df9380519cf514d5fbb5aeaa7aa5de5f32c50330badcadc05cdabaae5566",
+        "lean_version": "Lean (version 4.35.0, x86_64-unknown-linux-gnu, commit eb6cafb7290e8bd5f2937522d8d804f58f02bafc, Release)",
+        "requested_model": "gpt-6.1-sol",
+        "requested_reasoning_effort": "medium",
+        "library_manifest_sha256": "9e10a38d592324e664c1cb74b7fe00473782bff3940506d50f8e59059549f328",
+        "checker_sources": {
+          "vcs_protocol.py": "8f7cbe5c954a92e0d757f2c12aa518d7f69150d0bd3a69e93122c67fd59e96ac",
+          "vcs_lean.py": "06c64dea78e651bf97f68863008ff866a9100f61043609453004b671de8f8c83",
+          "vcs_extract.py": "07066b26cce741b2f9d61b358d5b42332575d383141e0693cafe66f2c5341e88",
+          "protocol_entrypoint.sh": "c16b932984aafd8b53c277c5a3274460d43cedf50d693da2e49f8f1e3ceafb9e"
+        }
+      },
+      "requested_client": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "medium"
+      }
+    },
+    {
+      "run": "balls-claude",
+      "status": "accepted",
+      "cycles": 2,
+      "inputs": {
+        "task": {
+          "file": "inputs/balls-claude-task.txt",
+          "sha256": "9623fbe8c4350c8a4da82c6d090ceac257b7ac14e6b250967cc1ea76fc5d1e9b"
+        },
+        "instructions": {
+          "file": "inputs/balls-claude-instructions.txt",
+          "sha256": "e6cc50e09f3c31ebc31482fa7c85b734b4334183497385e16b2d1c998564c958"
+        }
+      },
+      "attempts": [
+        {
+          "attempt": "attempt-001",
+          "status": "rejected",
+          "binding": "83f45ad8ea4e26d08ea981d547955f61e0ed738fbce31f2d083292a5e26238fb",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "reject",
+            "reason": "Human review: rejected. Prove the general beta-binomial variance formula from the distribution definition too. The human is still reviewing the remaining assumptions; do not resume until that review is complete.",
+            "time": "2026-11-17T13:06:36.637490+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "27c6f29349c03154ab84b2201c32dd902d430035b9fa3ba1037e3013129dfd96"
+        },
+        {
+          "attempt": "attempt-002",
+          "status": "accepted",
+          "binding": "8a4b7b9909c6c39b1d13ef1aa2ee10af5e555a3ce6335cd1ce7582bc784a57f9",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "accept",
+            "reason": "Human TUI review of the revised assumptions, definitions and conclusion: Great! Accept it)",
+            "time": "2026-11-17T13:47:13.683296+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "f9b20bda8ccca7c7427081b6c3df9f9d69baf2eff9720363206c3c602a514650"
+        }
+      ],
+      "initial_clarification": {
+        "file": "inputs/balls-claude-initial-clarification.txt",
+        "sha256": "bda5cf6196ae07c0f2cfc37fb30c04ef05453f87fc7098093cf9a36c60a31494"
+      },
+      "latest_attempt_provenance": {
+        "image": "sha256:c0e8df9380519cf514d5fbb5aeaa7aa5de5f32c50330badcadc05cdabaae5566",
+        "lean_version": "Lean (version 4.35.0, x86_64-unknown-linux-gnu, commit eb6cafb7290e8bd5f2937522d8d804f58f02bafc, Release)",
+        "agent": "claude",
+        "client_version": "2.1.325 (Claude Code)",
+        "client_sha256": "0dc4f4a9a165fc60746d7ae8489712e5fc352f1e7ad4eb22e7141bd0812eb0cf",
+        "requested_model": "claude-sonnet-5-5",
+        "requested_reasoning_effort": "medium",
+        "library_manifest_sha256": "9e10a38d592324e664c1cb74b7fe00473782bff3940506d50f8e59059549f328",
+        "checker_sources": {
+          "vcs_protocol.py": "592c925ea20a4c2a7b6e6f8064e8c4c53cf00b546fc8b7269b57d43d7c1da69c",
+          "vcs_lean.py": "06c64dea78e651bf97f68863008ff866a9100f61043609453004b671de8f8c83",
+          "vcs_extract.py": "07066b26cce741b2f9d61b358d5b42332575d383141e0693cafe66f2c5341e88",
+          "protocol_entrypoint.sh": "8cde7332fdbf5f191fee392de783f4cfe52f036c34a2188061d86f6977cee6b9"
+        }
+      },
+      "requested_client": {
+        "agent": "claude",
+        "client_version": "2.1.325 (Claude Code)",
+        "model": "claude-sonnet-5-5",
+        "reasoning_effort": "medium"
+      }
+    },
+    {
+      "run": "lake-codex",
+      "status": "awaiting_review",
+      "cycles": 2,
+      "inputs": {
+        "task": {
+          "file": "inputs/lake-codex-task.txt",
+          "sha256": "1a5e06593c8125b9abfc78b4b54f0114377db454dd7b01eed932ae636cc32389"
+        },
+        "instructions": {
+          "file": "inputs/lake-codex-instructions.txt",
+          "sha256": "c684ca7a61b43321b2b6936e8ecb0af8b0fa76ac0e2c8b332582d2b5cd184a86"
+        }
+      },
+      "attempts": [
+        {
+          "attempt": "attempt-001",
+          "status": "awaiting_review",
+          "binding": "0d722d7336eeafbe4fd222e87f0c3e6e6c6039577447a0a75e9229d644094137",
+          "binding_verified": true,
+          "verification_verdict": "proved"
+        }
+      ],
+      "latest_attempt_provenance": {
+        "image": "sha256:c0e8df9380519cf514d5fbb5aeaa7aa5de5f32c50330badcadc05cdabaae5566",
+        "lean_version": "Lean (version 4.35.0, x86_64-unknown-linux-gnu, commit eb6cafb7290e8bd5f2937522d8d804f58f02bafc, Release)",
+        "agent": "codex",
+        "client_version": "codex-cli 0.166.0",
+        "client_sha256": "b8a11fedf24b2dfb59a70c9e52b030f9a508dcd49cd2dd0d41956f4c785156b8",
+        "requested_model": "gpt-6.1-sol",
+        "requested_reasoning_effort": "medium",
+        "memory": "3g",
+        "cpus": "2",
+        "code_mode_host_sha256": "657f4e902726e05867c937b583049d5997e057f8cd0ab40450633c9c9ef8d630",
+        "library_manifest_sha256": "9e10a38d592324e664c1cb74b7fe00473782bff3940506d50f8e59059549f328",
+        "checker_sources": {
+          "vcs_protocol.py": "7ff4ba4c5fac40335c1575ab5d0f26bc58860e3bf247ff6cc0f631cccd9f2cc5",
+          "vcs_lean.py": "06c64dea78e651bf97f68863008ff866a9100f61043609453004b671de8f8c83",
+          "vcs_extract.py": "07066b26cce741b2f9d61b358d5b42332575d383141e0693cafe66f2c5341e88",
+          "protocol_entrypoint.sh": "8cde7332fdbf5f191fee392de783f4cfe52f036c34a2188061d86f6977cee6b9"
+        }
+      },
+      "requested_client": {
+        "agent": "codex",
+        "client_version": "codex-cli 0.166.0",
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "medium",
+        "memory": "3g",
+        "cpus": "2"
+      }
+    },
+    {
+      "run": "lake-claude",
+      "status": "running",
+      "cycles": 5,
+      "inputs": {
+        "task": {
+          "file": "inputs/lake-claude-task.txt",
+          "sha256": "1a5e06593c8125b9abfc78b4b54f0114377db454dd7b01eed932ae636cc32389"
+        },
+        "instructions": {
+          "file": "inputs/lake-claude-instructions.txt",
+          "sha256": "c684ca7a61b43321b2b6936e8ecb0af8b0fa76ac0e2c8b332582d2b5cd184a86"
+        }
+      },
+      "attempts": [
+        {
+          "attempt": "attempt-001",
+          "status": "rejected",
+          "binding": "c2e30a261261b3fd82b464ab1cd8323b33b5e8472db938b5c9be05184b21adea",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "reject",
+            "reason": "Human review of attempt 001: changes required.\n\nContinue the original lake-inventory task using the supplied synthetic observations. The human rejected the blanket independent 1/2 prior for the presence of every candidate species as unreasonable. The human also flagged the unjustified Beta(1,1) detection-prior parameters and the missing formal derivation connecting that model to lPresent. The following review consolidates those objections and the remaining substantive issues. No replacement prior or revised scientific model has yet been approved.\n\n1. Justify the presence and detection priors rather than replacing arbitrary constants with other arbitrary constants. A species-presence event means at least one living individual inhabits the lake. The eight-taxon assay panel is not a presence list or evidence of equal prior occurrence probabilities. Use relevant evidence/literature and supplied calibration where applicable, expose assumptions not identifiable from these data, and show material prior sensitivity. A prior is a modeling choice, not something that can automatically be identified from the observations alone. The same scrutiny applies to Beta(2,16) for contamination: two field blanks pooled across eight taxa are not automatically 16 independent, interchangeable observations of a common species-specific false-positive probability. Justify pooling, the starting prior and transfer from blank controls to lake-water samples.\n\n2. Prove the distribution-to-formula connections. lPresent and lAbsent currently introduce factorial expressions as definitions; the Beta/Bernoulli model and conditional independence exist only in comments. Formally specify the chosen probability model and derive the likelihood expressions and posterior presence calculation from it. Valid parameter domains, nonzero normalization and probabilities must be proved or obtained from suitable library results. Merely naming a rational expression a likelihood or posterior does not establish that interpretation.\n\n3. The density prior Gamma(shape 1, rate 0.1 per density unit) is also an unsupported numerical choice. In the stated units its mean density is 10 fish per square metre in each species/size/habitat cell before observations; examine and justify the implied population scale. Derive updated parameters from the actual chosen prior and observation likelihood, rather than inserting alphaPost and betaPost formulas by definition and only evaluating them. gamma_poisson_conjugacy currently proves an unnormalized algebraic kernel identity, not the complete normalized posterior statement.\n\n4. Repair the evidence combination and the meaning of presence. postPresent uses only eDNA, whereas abundance is obtained from cameras and then multiplied by that eDNA-only probability. Under the stated no-camera-false-positive observation model, a correctly identified camera encounter is impossible when that species is absent; it therefore must affect posterior presence. Derive the combination from a coherent joint model, including false-positive/identification errors if admitted. Also reconcile 'present means N > 0' with the report's untruncated Gamma-Poisson/negative-binomial count conditional on presence, which assigns positive probability to N = 0. Define these events consistently and prove the relevant relationship.\n\n5. Use calibration with its actual meaning and uncertainty. Reference-video successes do not directly establish exact in-lake detection probabilities: field visibility/availability and habitat transfer need explicit treatment. The plug-in (calHit+1)/(calTrials+2) ignores finite calibration uncertainty and assumes that transfer. Camera false-label controls are supplied, but the current count model ignores false positives; this can particularly inflate rare-species abundance. Account for these effects with a justified tractable model and propagate material uncertainty, or expose and justify a simplifying approximation for human review. Do not silently treat estimated detection, mapped areas or transfer factors as exact measured constants. Repeated views are encounters with a fixed population, not newly generated lake populations or distinct fish. State the dependence/coverage assumptions needed for their likelihood.\n\n6. Deliver the requested probability distributions. There is no species-count or total-count probability mass function/random variable in the submitted Lean file. cellMean, cellVar, totalMean and totalVar are names for rational formulas; their interpretation as moments of the claimed Gamma-Poisson/zero-inflated count laws is not proved. Define the count laws, establish normalization, derive their moments, and derive the total law from the species joint law. Independence and the variance addition it permits must be represented mathematically. Simple ring identities do not establish distributional moment or independence claims.\n\n7. Connect intermediate derivations to the final scientific theorem. answer_theorem proves arithmetic bounds by unfolding the definitions; it does not use gamma_poisson_conjugacy, poisson_convolution, zero_inflated_var or nb_var_identity. The final proof must establish its scientific meaning from the probability model, rather than leaving separate unused theorems next to hard-coded moment formulas. Keep the human review boundary compact and understandable: supplied data and justified model choices at the boundary, derived parameters and probability identities as intermediate lemmas, meaningful species/total distributions and numerical consequences as conclusions. No circular assumption of the desired conclusion and no unproved scientific identities disguised as definitions.\n\n8. Match the target population. Summing the eight panel species alone is not automatically the total population of an unspecified lake. Either justify an explicit exhaustive-species assumption for human review or handle non-panel fish and qualify the inferred quantity accurately. Likewise, justify habitat coverage. State any independence or exact-area approximations that materially affect the total-population result. A detailed physical simulator or maximal precision is not required; an understandable, scientifically justified demonstration with a proved model-to-result chain is required.\n\nRetain the original observations, data provenance and prior attempts. These are simulated observations, not physical measurements. You have not been supplied the simulator source, hidden populations or another agent's result; do not seek them. You may consult general literature or request specific missing information/experiments through the existing protocol. Request rather than invent unavailable measurements. Do not respond only with an impossibility argument when a justified conditional worked model can answer the task. If a choice genuinely cannot be supported, present it explicitly for human review without claiming it was inferred or approved.\n\nGeneral methodological reference checked by the reviewer: Goldberg et al. (2016), Critical considerations for the application of environmental DNA methods to detect aquatic species, https://www.usgs.gov/publications/critical-considerations-application-environmental-dna-methods-detect-aquatic-species . It discusses contamination, assay validation, spatial/temporal inference, false detections and limits of abundance interpretation. It supplies no numerical answer, priors or counts for this lake.\n",
+            "time": "2026-11-17T19:57:32.164627+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "b44d8c26e38d673202bcea7d7776c3351c57ee8ac2e9f69f712d6510d9c8c285"
+        },
+        {
+          "attempt": "attempt-002",
+          "status": "rejected",
+          "binding": "65b73c978d868f0ae8914589057ee26efe67fd77d20be7dde9fd39fa33b83f8a",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "reject",
+            "reason": "Human review of attempt 002: further changes required.\n\nHuman instruction, verbatim:\n\"Ok, tell him that population sizes should be proven on Lean, let's assume that he should either derive the probability of the fact that some species are actually present in the lake from statistic or treat it as 1.\"\n\n1. Prove the numerical population conclusions in Lean. The report's numerical species-population and total-population estimates currently come only from Python. The final Lean conclusions must include checked numerical consequences for the population distributions you report, such as numerical bounds on posterior population means and any population intervals you claim. Derive those consequences from your formally specified model, the supplied observations and the stated scenario parameters. Python may help calculate candidate bounds, but general normalization/convolution theorems alone do not establish the reported numbers. This requirement concerns the conditional population estimates, not knowledge of an unobserved true population. Do not present unverified numerical approximations as Lean-proved results.\n\n2. For species presence, use one of the two approaches the human authorizes: (a) derive/estimate the relevant presence probabilities from statistical evidence, with explicit sources, reference population, method and uncertainty, instead of an unsupported species-specific judgment table; or (b) take presence as certain (probability 1) as an explicit model assumption for the species whose population you estimate. Under option (b), clearly state which species are assumed present, and condition the count inference accordingly; do not claim the survey proved certain presence or that all assay-panel species must inhabit the lake. The former omega values 0.97, 0.90, 0.80, etc. have not been approved as evidence-based estimates. Relevant regional survey statistics may support option (a), but mere occurrence somewhere in a region is not a numerical lake-presence frequency.\n\nPreserve the useful distributional derivations and coherent combination of camera/eDNA evidence from this revision. Retain the supplied synthetic data, previous human feedback, and model assumptions for review. Choose a tractable formulation that produces the requested proved numerical worked example. No peer-agent answer, hidden lake population or simulator source is supplied. You may consult literature or request genuinely missing evidence through the existing protocol. No revised result is accepted until the human reviews it.\n",
+            "time": "2026-11-17T22:06:37.196037+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "e289d96c8e5f55b0ec0b0dd6440f39c7d0d04b0836f57c2a5e54ec9d591dbec3"
+        },
+        {
+          "attempt": "attempt-003",
+          "status": "rejected",
+          "binding": "1546829067d77b5bc29480f9f528ae7c612156176358627397251ba178a397f4",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "reject",
+            "reason": "Human review of attempt 003: rejected because observed taxa were excluded from the inference.\n\nHuman instruction, verbatim:\n\"Then, we should reject the proof, because more types of fish DNA were observed but ignored\"\n\nThe original task is to assess which fish species inhabit the lake, their count distributions, and the total population distribution. Restricting the answer to perch, roach, ruffe and pike does not resolve that task. The supplied synthetic survey also contains positive eDNA grabs for burbot, common bream and bleak; cameras recorded burbot and common-bream labels as well. Their signals may be contamination or false labels, but uncertainty is a reason to model their possible presence, not silently remove them from the species inventory and count total. Do not treat an assay-panel entry as proof of presence, or a nondetection as proof of absence.\n\nRevise the model and formal conclusions to cover the additional taxa with observed evidence. Account for the relevant supplied detections and negative controls, and expose any justified presence/absence or error assumptions. Preserve the human's earlier choice: use statistically supported presence probabilities or an explicit probability-1 presence assumption where that is the model being proposed. This permission does not authorize excluding observed taxa simply because their presence is uncertain. Do not assume their actual presence solely from DNA signals unless explicitly taking the authorized conditional assumption and identifying it as such.\n\nDerive the species count distributions and their combined population law consistently with the chosen treatment of uncertain presence. Preserve the requirement that reported numerical population conclusions be established in Lean. Retain useful normalization, moment and convolution derivations. Prior feedback about detection calibration, false positives and repeated camera encounters still applies; do not discard those effects just to make a smaller or more convenient proof. Make the modeled species universe and habitat coverage explicit so a four-species subtotal cannot be presented as the requested whole-lake population. No new species list or presence prior has been approved by this rejection, and the revised geometric prior and pooled-camera model have not been accepted.\n\nUse the original synthetic observations and calibration/control records. No hidden populations, simulator source, peer-agent solution or additional measurements are supplied. You may request genuinely missing information through the existing protocol. Retain prior attempts, human decisions and recovery provenance. The next candidate requires human review.\n",
+            "time": "2026-11-17T23:05:35.208789+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "a86bb6bd040559cdb2f65333e11bd3ff7fedaebb3fe798e27f2405ab0c840a5d"
+        }
+      ],
+      "latest_attempt_provenance": {
+        "image": "sha256:c0e8df9380519cf514d5fbb5aeaa7aa5de5f32c50330badcadc05cdabaae5566",
+        "lean_version": "Lean (version 4.35.0, x86_64-unknown-linux-gnu, commit eb6cafb7290e8bd5f2937522d8d804f58f02bafc, Release)",
+        "agent": "claude",
+        "client_version": "2.1.325 (Claude Code)",
+        "client_sha256": "0dc4f4a9a165fc60746d7ae8489712e5fc352f1e7ad4eb22e7141bd0812eb0cf",
+        "requested_model": "claude-sonnet-5-5",
+        "requested_reasoning_effort": "medium",
+        "memory": "3g",
+        "cpus": "2",
+        "library_manifest_sha256": "9e10a38d592324e664c1cb74b7fe00473782bff3940506d50f8e59059549f328",
+        "checker_sources": {
+          "vcs_protocol.py": "7ff4ba4c5fac40335c1575ab5d0f26bc58860e3bf247ff6cc0f631cccd9f2cc5",
+          "vcs_lean.py": "06c64dea78e651bf97f68863008ff866a9100f61043609453004b671de8f8c83",
+          "vcs_extract.py": "07066b26cce741b2f9d61b358d5b42332575d383141e0693cafe66f2c5341e88",
+          "protocol_entrypoint.sh": "8cde7332fdbf5f191fee392de783f4cfe52f036c34a2188061d86f6977cee6b9"
+        }
+      },
+      "requested_client": {
+        "agent": "claude",
+        "client_version": "2.1.325 (Claude Code)",
+        "model": "claude-sonnet-5-5",
+        "reasoning_effort": "medium",
+        "memory": "3g",
+        "cpus": "2"
+      }
+    },
+    {
+      "run": "salt-codex",
+      "status": "awaiting_input",
+      "cycles": 6,
+      "inputs": {
+        "task": {
+          "file": "inputs/salt-codex-task.txt",
+          "sha256": "04b419854a63f6c5888fc2427aef8df855ba822505743ecd28d35609d2f5ab3a"
+        },
+        "instructions": {
+          "file": "inputs/salt-codex-instructions.txt",
+          "sha256": "c684ca7a61b43321b2b6936e8ecb0af8b0fa76ac0e2c8b332582d2b5cd184a86"
+        }
+      },
+      "attempts": [
+        {
+          "attempt": "attempt-001",
+          "status": "rejected",
+          "binding": "3a20a8475cfe729b5af2571186d7955b130ea30b973191670a2a8c415ca373d9",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "reject",
+            "reason": "Human TUI feedback: propose and prove how net heating power changes after adding salt. Derive the relationship from an explicit physical model and exposed assumptions, rather than leaving before/after net powers unrelated, and use it to answer the salt-addition timing question. Request experiments if needed. This is a request to revise; no acceptance of the current result.",
+            "time": "2026-11-17T14:13:17.588492+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "eaa034cc3f14c75ec74a6d82c0bfa111fd9aa1f260841c6d61a5f06d9ec5a908"
+        },
+        {
+          "attempt": "attempt-002",
+          "status": "rejected",
+          "binding": "229f69c0a4a229a9167170007d0691354e76926a4b40d4503c1c9aae828bf330",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "reject",
+            "reason": "Human TUI requests revision: account for the actual change in total heat capacity on dissolving salt; do not assume S>=0. Determine or justify its sign for an explicitly stated salt/concentration/temperature regime, or derive the appropriate conditional regimes. Preserve positive total capacity C+S>0. Re-derive the net-power change and optimal timing without presuming that mixing always cools the liquid or increases net power when S may be negative. Keep the accepted lumped, constant-input, Newtonian heat-loss approximation. Clarify the reference temperature of the dissolution-energy parameter and use it consistently with the heat-capacity change. Keep the timing domain physically feasible for unsalted water before boiling and the liquid mixture afterward. Within the accepted approximations, operator review found no separate algebraic blocker; these points are consequences and domain requirements of the requested heat-capacity correction. No acceptance of the current recommendation.",
+            "time": "2026-11-17T15:42:22.536092+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "4a0c84946bd0b6be51b82e22e270aba19a9cc296b175df72c408c90611c4c580"
+        },
+        {
+          "attempt": "attempt-003",
+          "status": "rejected",
+          "binding": "f797b3f8a1d3e63d150060fcb98fab141b21fa029b778c95b9cbd3fb3191af67",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "reject",
+            "reason": "Human review of attempt 003: connect the conditional timing theorem to a justified physical case.\n\nHuman instruction, verbatim:\n\"We are not asking for numerical result, so that's OK. Just ask codex to connect his case with some assumptions about reality. Btw, what claude do we use? Sonnet?\"\n\nThe human accepts the shared constant-input Newtonian heating/loss approximation netPower(W,k,A,T) = W - k*(T-A), with the same law before and after salting. Keep the useful signed-capacity timing theorem and its energy-balance derivations.\n\nChoose and justify a concrete physical scenario consistent with the original one-litre, 20 C water task: specify the salt, a reasonable amount or concentration regime, initial salt/environmental conditions and relevant applicability assumptions. Use verified literature, physical relationships and explicit scenario assumptions to establish which of your conditional timing cases actually applies. In particular, establish the necessary heat-capacity-change and dissolution-energy signs/bounds with the correct enthalpy reference, rather than leaving S and H wholly unspecified or assuming the desired optimum. Material-property data or explicitly justified empirical models can be scientific premises; derive their consequences and the qualitative optimal timing in Lean. Derive the domain/positivity conditions you can from the chosen case and expose any remaining apparatus assumptions for human review. Do not allow waiting through unsalted boiling or an inadmissible mixing/phase state merely to obtain an optimum.\n\nA numerical time saving, a numerical heating duration, or a particular number of seconds is NOT required. A physically motivated case with a formally established recommendation such as earliest feasible addition is a sufficient target if your chosen physical assumptions imply it. Select and derive the appropriate recommendation independently; do not force that example recommendation as a premise. Preserve the existing original observations and provenance, avoid invented experiments and unverified recalled citations, and keep the assumptions/conclusions readable. You may request specific missing evidence through the existing protocol.\n\nNo other agent's model, parameter choices, numerical results or proof are supplied. This feedback requests revision, not full acceptance of attempt 003.\n",
+            "time": "2026-11-17T22:50:26.998356+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "bd389293bab1fb7bd012f0897bf89a5d34352b51151fa0ed3fb1e7fc1c382fc9"
+        },
+        {
+          "attempt": "attempt-004",
+          "status": "rejected",
+          "binding": "62cab12cdba708c93364b16f366c5ec3e07f7bfe8373db3a4203382271742318",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "reject",
+            "reason": "Human review of attempt 004: revise the material-model derivation and surface all approximation gaps.\n\nHuman instructions, verbatim:\n\"List that 0.99820675 should be derived. it's a minor thing, we'll accept it if there will be no more errors. What's next?\"\n\"Interpolation should be derived, not assumed. Does he make any more analogous errors?\"\nAfter the operator listed the issues below: \"Ok, surface it all to him and send him on the next attempt. claude fish finished?\"\n\nThe following consolidates the entire review of this candidate. These are gaps in the material-property-to-timing derivation, not a report that the checked algebra is inconsistent. Empirical data and a justified empirical correlation may be premises; their derived parameters, numerical consequences and the timing implication must be established in Lean. The human still does not require a numerical heating duration or time saving.\n\n1. Solvent mass (minor): derive 0.99820675 kg from the supplied litre and the cited reference density, with explicit unit conversions, rather than inserting it independently into the molality formula. The human had said this omission alone would not prevent acceptance if there were no further errors; there are additional issues below. Do not represent this as full acceptance of the candidate.\n\n2. Concentration-dependent v and q: the linear interpolation between m=0.15 and m=0.20 is an extra physical approximation. Implementing its arithmetic does not prove that it agrees with the source material-property model at m about 0.1714. Prefer formalizing/evaluating the original concentration-dependent relations provided by the paper (including the relevant equations 15-18 and justified coefficients), deriving v and q for the scenario concentration. If using interpolation instead, derive a bound against the chosen source model sufficient to preserve the conclusion; two tabulated points alone do not establish physical linearity.\n\n3. Standard dissolution enthalpy at 20 C: interpolation between actual 19.97 and 25 C data has no proved approximation-error treatment. This is a minor near-point interpolation, but it must be exposed and justified or derived from a supported temperature-dependent source model, with its uncertainty kept distinct from exact arithmetic.\n\n4. Standard dissolution enthalpy at 100 C: the extrapolation beyond the last 95.18 C data point using the 84.98-to-95.18 segment is more substantial. The source does not certify linear continuation or its error. Use an applicable temperature-dependent model or justify and bound this extrapolation sufficiently for the qualitative claim. The source bundle contains additional primary thermodynamic material; verify equations/coefficients against original pages rather than trusting OCR.\n\n5. Solid NaCl sensible heat: the effective constant 51 J/(mol K) is a chosen approximation guided by nearby data. Derive the 20-to-100 C solid sensible-enthalpy increment from an applicable source heat-capacity relation, or prove adequate integral bounds from supported property assumptions. Do not quietly extrapolate a fit below its stated lower temperature.\n\n6. Effective constant capacity / secant reduction (main concern): naclCapacityChange fits two endpoint enthalpies and then the final proof treats that slope as the actual constant solution-minus-water capacity throughout 19..101 C. Agreement at endpoints and a few Python residual checks do not establish intermediate behavior or preservation of the optimal addition timing. Derive the relevant thermodynamic behavior from the temperature-dependent material model and prove the needed sign/timing conditions over the applicable interval, or establish an approximation/error theorem sufficient to transfer the recommendation. Do not merely rename a fitted slope as the physical capacity increment. Do not discard temperature dependence solely to obtain a tractable conclusion.\n\n7. Other numeric premises: C>=3900 J/K and the pure-water/brine boiling-temperature intervals remain assumptions. Where feasible derive them from component storage, supported pure-water properties, specified pressure and an applicable phase-equilibrium/composition model, rather than inserting aggregate numerical bounds. Otherwise clearly expose precisely what remains an independently justified physical input for human review. These are separate from the already accepted shared Newtonian-loss approximation.\n\nRetain the original litre/20 C problem, your independently chosen 10 g NaCl scenario, primary evidence response f7c987a52391410bb035542305825b3f, and prior attempts. Keep the common constant-input Newtonian heating/loss model already accepted by the human. Source values must retain temperature, composition, units and reference-state meaning. No other agent's proof, material parameters or answer is supplied. Do not choose a new physical quantity or force signs to preserve the current optimum. Prove the qualitative timing conclusion actually implied by the justified model, and request genuinely missing evidence if necessary. No revised proof is accepted until human review.\n",
+            "time": "2026-11-17T23:57:47.752932+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "33d962c571585e17406b687302cc543fe6b6d23a83dd1f6a993e412a102c56e3"
+        }
+      ],
+      "latest_attempt_provenance": {
+        "image": "sha256:c0e8df9380519cf514d5fbb5aeaa7aa5de5f32c50330badcadc05cdabaae5566",
+        "lean_version": "Lean (version 4.35.0, x86_64-unknown-linux-gnu, commit eb6cafb7290e8bd5f2937522d8d804f58f02bafc, Release)",
+        "agent": "codex",
+        "client_version": "codex-cli 0.166.0",
+        "client_sha256": "b8a11fedf24b2dfb59a70c9e52b030f9a508dcd49cd2dd0d41956f4c785156b8",
+        "requested_model": "gpt-6.1-sol",
+        "requested_reasoning_effort": "medium",
+        "memory": "4g",
+        "cpus": "2",
+        "code_mode_host_sha256": "657f4e902726e05867c937b583049d5997e057f8cd0ab40450633c9c9ef8d630",
+        "library_manifest_sha256": "9e10a38d592324e664c1cb74b7fe00473782bff3940506d50f8e59059549f328",
+        "checker_sources": {
+          "vcs_protocol.py": "7ff4ba4c5fac40335c1575ab5d0f26bc58860e3bf247ff6cc0f631cccd9f2cc5",
+          "vcs_lean.py": "06c64dea78e651bf97f68863008ff866a9100f61043609453004b671de8f8c83",
+          "vcs_extract.py": "07066b26cce741b2f9d61b358d5b42332575d383141e0693cafe66f2c5341e88",
+          "protocol_entrypoint.sh": "8cde7332fdbf5f191fee392de783f4cfe52f036c34a2188061d86f6977cee6b9"
+        }
+      },
+      "requested_client": {
+        "agent": "codex",
+        "client_version": "codex-cli 0.166.0",
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "medium",
+        "memory": "4g",
+        "cpus": "2"
+      }
+    },
+    {
+      "run": "salt-claude",
+      "status": "awaiting_input",
+      "cycles": 5,
+      "inputs": {
+        "task": {
+          "file": "inputs/salt-claude-task.txt",
+          "sha256": "04b419854a63f6c5888fc2427aef8df855ba822505743ecd28d35609d2f5ab3a"
+        },
+        "instructions": {
+          "file": "inputs/salt-claude-instructions.txt",
+          "sha256": "c684ca7a61b43321b2b6936e8ecb0af8b0fa76ac0e2c8b332582d2b5cd184a86"
+        }
+      },
+      "attempts": [
+        {
+          "attempt": "attempt-001",
+          "status": "rejected",
+          "binding": "13c70f24034288a1fa34deb758065aa954508b21e280c495abb9c840f81ed5cf",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "reject",
+            "reason": "Human TUI feedback: prove the nonnegativity of Cs too, instead of assuming it. Justify whether adding salt increases the total heat capacity of the solution for the relevant conditions, using physical premises, literature or requested experiments. If the sign cannot be established or the premise is false in the relevant regime, explain that and revise the model and conclusion rather than assuming the desired inequality. No acceptance of the current result.",
+            "time": "2026-11-17T14:31:58.338525+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "a97ac4bc46a47ebbfb30f9797c5ea075359877f5fe3093f1bb3ee5d5a667bfd0"
+        },
+        {
+          "attempt": "attempt-002",
+          "status": "rejected",
+          "binding": "284dbd95781f18d774c527db8e1454b52fcf26da70dcc1a284ebb7f2abb4eb8c",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "reject",
+            "reason": "Human follow-up: the chosen Newtonian heat-loss/lumped heating model is accepted for this task. The sign of Cs is still to be established, not presumed nonnegative. Determine and justify whether Cs is positive, negative or changes sign in the relevant temperature/concentration regime, using literature or requested experiments, and state the resulting implication for salt-addition timing. If an amount/concentration or other input is needed, request it explicitly. Preserve the accepted heat-loss model while resolving this physical-property question. This is a request for further work, not acceptance of the complete theorem or final recommendation.",
+            "time": "2026-11-17T14:37:13.321544+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "f195ef098fad074874be10d35be632788d180c5796c1964417432a42669b04c5"
+        },
+        {
+          "attempt": "attempt-003",
+          "status": "rejected",
+          "binding": "1276b67710edadd6ed101578eaf6afade64ed6c7702bd3a197eb541cee4529bb",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "reject",
+            "reason": "Human TUI requests revision: choose reasonable, explicitly justified bounds on the salt/water ratio for the original 1 L water task, and derive Cs according to an explicit model. State whether the ratio means salt mass / water mass or salt mass fraction of the final solution and prove any conversion used. State the chosen salt and any water-volume-to-mass approximation. Choose and justify a suitable solution heat-capacity model/correlation and its applicable temperature and concentration range; expose empirical inputs as inputs, not Lean-derived measurements. Derive the total heat-capacity change Cs and its sign/bounds throughout the chosen regime, rather than assuming fitted Cs values or its desired sign. Use the result in the salt-timing analysis and check the required conditions instead of silently presuming them. If temperature dependence matters, handle it consistently or justify a bounded approximation sufficient for this demonstration. Keep the previously accepted Newtonian heat-loss/lumped heating model. Precision beyond what the worked demonstration needs is not required. Preserve attempts; no acceptance of the current final recommendation.",
+            "time": "2026-11-17T16:02:35.910575+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "9da4e0bf20aa7ab22f6330f2e3fb0f7c1b6d522a0156bf273e0e44f70448afe4"
+        },
+        {
+          "attempt": "attempt-004",
+          "status": "rejected",
+          "binding": "2ddafd50e513148c684a2711054c9894cac903c7cd05bf3a01c77d0d4c0077ce",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "reject",
+            "reason": "Human review of attempt 004: verify the empirical reference and calculate Phi inside Lean.\n\nHuman instruction, verbatim:\n\"Tell him to check the ref and calculate Phi inside Lean. Is claude fish done?\"\n\n1. Check the dissolution-enthalpy reference rather than relying on recalled NBS/CRC values. Retrieve and inspect an authoritative source, retain its exact reference and relevant page/table/equation, and establish that the quantity, temperature, final concentration, initial solid state, sign convention and enthalpy reference match your model. Distinguish a 25 C standard/infinite-dilution value from dissolution at 20 C to a finite concentration. If a conversion or interpolation is needed, state and justify it and derive its mathematical consequences. Reassess the claimed hsol lower bound with supported uncertainty/applicability. Do not retain an unsupported bound merely because it yields the existing conclusion.\n\n2. Calculate Phi in Lean from the explicit material-property model. The bounds [-41,-27] currently enter as numerical premises derived only in Python. Instead formalize the relevant correlation or another justified thermodynamic model, expose empirically sourced coefficients/data and their applicability as reviewable premises, derive the solution-minus-original-water apparent molar heat capacity and any constant effective Phi you use, and prove the bounds needed by the timing theorem in Lean. Numerical evaluation or approximations must have proved enclosures sufficient for the conclusion. Python may suggest bounds; it must not be the sole evidence for them. Do not introduce a new assumption of the same desired Phi bound under another name.\n\n3. Preserve the physical meaning of the reduction. If using a secant average of temperature-dependent heat capacity, define and derive that average and justify its use for the timing comparison over the whole relevant addition-temperature interval. Agreement at two endpoints alone does not establish the intermediate mixing-energy inequalities. If the verified property model requires changing the regime or the qualitative recommendation, explain why and prove the result that actually follows, without tuning evidence to force an optimum.\n\nKeep the already accepted shared constant-power/Newtonian-loss approximation and retain the previous attempts and source/provenance records. A numerical heating duration or numerical time saving is not required. A physically supported qualitative recommendation with the property-to-conclusion proof chain is required. No other agent's model, material values, results or proof are supplied; no new physical measurements are claimed. You may request specific missing literature through the existing protocol. The next candidate still requires human review.\n",
+            "time": "2026-11-17T23:46:18.240685+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "e5081a891a544349dcbd4695d952579de1ca207e8ec18caa8d6890d6f2e3632b"
+        }
+      ],
+      "latest_attempt_provenance": {
+        "image": "sha256:c0e8df9380519cf514d5fbb5aeaa7aa5de5f32c50330badcadc05cdabaae5566",
+        "lean_version": "Lean (version 4.35.0, x86_64-unknown-linux-gnu, commit eb6cafb7290e8bd5f2937522d8d804f58f02bafc, Release)",
+        "agent": "claude",
+        "client_version": "2.1.325 (Claude Code)",
+        "client_sha256": "0dc4f4a9a165fc60746d7ae8489712e5fc352f1e7ad4eb22e7141bd0812eb0cf",
+        "requested_model": "claude-sonnet-5-5",
+        "requested_reasoning_effort": "medium",
+        "memory": "4g",
+        "cpus": "2",
+        "library_manifest_sha256": "9e10a38d592324e664c1cb74b7fe00473782bff3940506d50f8e59059549f328",
+        "checker_sources": {
+          "vcs_protocol.py": "7ff4ba4c5fac40335c1575ab5d0f26bc58860e3bf247ff6cc0f631cccd9f2cc5",
+          "vcs_lean.py": "06c64dea78e651bf97f68863008ff866a9100f61043609453004b671de8f8c83",
+          "vcs_extract.py": "07066b26cce741b2f9d61b358d5b42332575d383141e0693cafe66f2c5341e88",
+          "protocol_entrypoint.sh": "8cde7332fdbf5f191fee392de783f4cfe52f036c34a2188061d86f6977cee6b9"
+        }
+      },
+      "requested_client": {
+        "agent": "claude",
+        "client_version": "2.1.325 (Claude Code)",
+        "model": "claude-sonnet-5-5",
+        "reasoning_effort": "medium",
+        "memory": "4g",
+        "cpus": "2"
+      }
+    },
+    {
+      "run": "coffee-codex",
+      "status": "accepted",
+      "cycles": 5,
+      "inputs": {
+        "task": {
+          "file": "inputs/coffee-codex-task.txt",
+          "sha256": "2136d3ae61f9dd3ad645d77a26d0d5cd0be108e212b9b55b5a9f03c6d1f153d3"
+        },
+        "instructions": {
+          "file": "inputs/coffee-codex-instructions.txt",
+          "sha256": "c684ca7a61b43321b2b6936e8ecb0af8b0fa76ac0e2c8b332582d2b5cd184a86"
+        }
+      },
+      "attempts": [
+        {
+          "attempt": "attempt-001",
+          "status": "rejected",
+          "binding": "309ecc3d877e6f1af39c33cb80a4c45f0d5c6d159169ee6a58ef5d8dc5a39e0d",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "reject",
+            "reason": "Human TUI feedback: add explicit, scientifically justified assumptions sufficient to produce numerical cooling-time results for the original coffee question. Distinguish the supplied facts from chosen scenario values; justify additional physical parameters using literature or requested experiments where useful, expose their uncertainty, and prove the numerical conclusion under the stated assumptions. A formula with an unspecified cooling rate alone is insufficient for the requested worked example. Do not invent measurements or present assumptions as observations. No acceptance of the current result.",
+            "time": "2026-11-17T15:12:29.290721+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "3acdd773fae54a71fd5e155d3bae509b2d88ad07ba650451617dadb15d78ea29"
+        },
+        {
+          "attempt": "attempt-002",
+          "status": "rejected",
+          "binding": "1ef7c0c994f543c4b7cb5c3da5c44afcf41c99ce39521c964cb9e54e217ba7c2",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "reject",
+            "reason": "Please revise the coffee proof in two places:\n\n1. State bounds on the coffee and mug masses and specific heat capacities. Define their combined heat capacity and derive its bounds as intermediate lemmas, rather than assuming 1100 <= C <= 1300. If the derived interval differs, use that interval.\n\n2. Specify the cylindrical cup dimensions and derive the exposed side and top areas from them, rather than inserting rounded areas directly. If you use rounded bounds, prove that they contain the calculated areas.\n\nThe side and top heat-transfer coefficient ranges are acceptable as explicit scenario assumptions for this demonstration. Update the cooling-time conclusions using the derived quantities.",
+            "time": "2026-11-17T17:07:43.701380+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "d029cfcc5c6f541c6c18636d80695819071dc3178ab7e87ca9efd1699542ecb0"
+        },
+        {
+          "attempt": "attempt-003",
+          "status": "rejected",
+          "binding": "c81a99b866085a43d3d1b658ab3bc6e7372c5de72da9c60adcb1e5c4a40ceb72",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "reject",
+            "reason": "Human review of attempt 003: revise the starting point of the scientific proof.\n\nHuman instruction, verbatim: \"Well, codex should assume the equation and derive the solution.\"\n\nAssume the differential heat-balance equation and initial temperature, rather than defining the exponential temperature curve as the scientific model and checking that it satisfies the equation. State the theorem for an arbitrary temperature function T with the required differentiability/derivative premises. The physical premises are the chosen constant-coefficient energy balance C * dT/dt = -60 * G * (T - 20) (time in minutes), positive C and G, and T(0) = 90. Derive the exponential solution from these premises, establishing that every temperature function satisfying them has that solution on the relevant time domain. Then derive the unique first 60 C crossing and the before/after threshold result from that solution.\n\nKeep the revised component heat-capacity calculation, exact cylinder surface areas, parameter ranges and numerical worked scenario. The final scenario_answer and nominal_answer conclusions should apply to arbitrary temperature functions satisfying the differential equation and initial condition, not just to the previously defined coffee function. Re-establish the numerical time bounds through this proof chain. An auxiliary explicit exponential function is fine, but it must not replace the derivation from the differential equation. No assumption of the desired solution or crossing time, and no additional unproved uniqueness premise.\n\nThis is further human feedback, not acceptance of the full result. Retain previous attempts and provenance; no other agent's code or proof has been supplied.\n",
+            "time": "2026-11-17T22:21:46.001295+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "4c6dbd58d51cb3def51208cfff9f7c399909dab44637dc013ec2a0973ded0bdf"
+        },
+        {
+          "attempt": "attempt-004",
+          "status": "accepted",
+          "binding": "dfb57fbb843a070e0e3078a15d5587ef74bcfd85a5217516520e9b6b1d8be1aa",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "accept",
+            "reason": "Human TUI acceptance after reviewing the component and heat-transfer assumptions, the differential-equation premise and derived solution, and the final crossing-time conclusions: Ok, accept. Lets get back to claude fish.",
+            "time": "2026-11-17T23:03:03.218139+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "ecaca1e9605db8846ccf22a084f890b74f4c5a15d7fedc770d0433db30bfa969"
+        }
+      ],
+      "latest_attempt_provenance": {
+        "image": "sha256:c0e8df9380519cf514d5fbb5aeaa7aa5de5f32c50330badcadc05cdabaae5566",
+        "lean_version": "Lean (version 4.35.0, x86_64-unknown-linux-gnu, commit eb6cafb7290e8bd5f2937522d8d804f58f02bafc, Release)",
+        "agent": "codex",
+        "client_version": "codex-cli 0.166.0",
+        "client_sha256": "b8a11fedf24b2dfb59a70c9e52b030f9a508dcd49cd2dd0d41956f4c785156b8",
+        "requested_model": "gpt-6.1-sol",
+        "requested_reasoning_effort": "medium",
+        "memory": "4g",
+        "cpus": "2",
+        "code_mode_host_sha256": "657f4e902726e05867c937b583049d5997e057f8cd0ab40450633c9c9ef8d630",
+        "library_manifest_sha256": "9e10a38d592324e664c1cb74b7fe00473782bff3940506d50f8e59059549f328",
+        "checker_sources": {
+          "vcs_protocol.py": "7ff4ba4c5fac40335c1575ab5d0f26bc58860e3bf247ff6cc0f631cccd9f2cc5",
+          "vcs_lean.py": "06c64dea78e651bf97f68863008ff866a9100f61043609453004b671de8f8c83",
+          "vcs_extract.py": "07066b26cce741b2f9d61b358d5b42332575d383141e0693cafe66f2c5341e88",
+          "protocol_entrypoint.sh": "8cde7332fdbf5f191fee392de783f4cfe52f036c34a2188061d86f6977cee6b9"
+        }
+      },
+      "requested_client": {
+        "agent": "codex",
+        "client_version": "codex-cli 0.166.0",
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "medium",
+        "memory": "4g",
+        "cpus": "2"
+      }
+    },
+    {
+      "run": "coffee-claude",
+      "status": "accepted",
+      "cycles": 1,
+      "inputs": {
+        "task": {
+          "file": "inputs/coffee-claude-task.txt",
+          "sha256": "2136d3ae61f9dd3ad645d77a26d0d5cd0be108e212b9b55b5a9f03c6d1f153d3"
+        },
+        "instructions": {
+          "file": "inputs/coffee-claude-instructions.txt",
+          "sha256": "c684ca7a61b43321b2b6936e8ecb0af8b0fa76ac0e2c8b332582d2b5cd184a86"
+        }
+      },
+      "attempts": [
+        {
+          "attempt": "attempt-001",
+          "status": "accepted",
+          "binding": "32f2bc45f4d14028712fe582f6f950b3ce55607966901d2a69afebeea85f147d",
+          "binding_verified": true,
+          "verification_verdict": "proved",
+          "human_decision": {
+            "decision": "accept",
+            "reason": "Human TUI review accepted the stated illustrative model, definitions and theorem. The exact proved expression may be numerically evaluated to obtain the cooling-time prediction; a tighter certified decimal interval is unnecessary for this demonstration.",
+            "time": "2026-11-17T15:25:34.925967+00:00",
+            "verification_verdict": "proved"
+          },
+          "decision_sha256": "26b47f329d111cf94acb9bbfd44cb9f367651845763ec3ab8c1d90ed490cc1af"
+        }
+      ],
+      "latest_attempt_provenance": {
+        "image": "sha256:c0e8df9380519cf514d5fbb5aeaa7aa5de5f32c50330badcadc05cdabaae5566",
+        "lean_version": "Lean (version 4.35.0, x86_64-unknown-linux-gnu, commit eb6cafb7290e8bd5f2937522d8d804f58f02bafc, Release)",
+        "agent": "claude",
+        "client_version": "2.1.325 (Claude Code)",
+        "client_sha256": "0dc4f4a9a165fc60746d7ae8489712e5fc352f1e7ad4eb22e7141bd0812eb0cf",
+        "requested_model": "claude-sonnet-5-5",
+        "requested_reasoning_effort": "medium",
+        "memory": "4g",
+        "cpus": "2",
+        "library_manifest_sha256": "9e10a38d592324e664c1cb74b7fe00473782bff3940506d50f8e59059549f328",
+        "checker_sources": {
+          "vcs_protocol.py": "7ff4ba4c5fac40335c1575ab5d0f26bc58860e3bf247ff6cc0f631cccd9f2cc5",
+          "vcs_lean.py": "06c64dea78e651bf97f68863008ff866a9100f61043609453004b671de8f8c83",
+          "vcs_extract.py": "07066b26cce741b2f9d61b358d5b42332575d383141e0693cafe66f2c5341e88",
+          "protocol_entrypoint.sh": "8cde7332fdbf5f191fee392de783f4cfe52f036c34a2188061d86f6977cee6b9"
+        }
+      },
+      "requested_client": {
+        "agent": "claude",
+        "client_version": "2.1.325 (Claude Code)",
+        "model": "claude-sonnet-5-5",
+        "reasoning_effort": "medium",
+        "memory": "4g",
+        "cpus": "2"
+      }
+    }
+  ]
+}
