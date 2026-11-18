@@ -19,7 +19,7 @@ Each run JSON has these fields:
 }
 ```
 
-`messages` groups the recorded activity by scientist cycle. Its nested message list contains the supplied study inputs, agent messages, tool calls and results, operator responses, submitted scientific report and independent checking results. Tool results retain their call identifiers. `produced_code` contains the full submitted Lean proof, its review extraction and retained checker snapshots referenced in that cycle. `user_feedback` preserves the decision and reason, with the review authority identified. A cycle ending in a request or interruption can have no review decision.
+`messages` groups the recorded activity by scientist cycle. Its nested message list contains the supplied study inputs, agent messages, tool calls and results, operator responses, submitted scientific report and independent checking results. Tool results retain their call identifiers. `produced_code` contains the full submitted Lean proof, its review extraction and retained checker snapshots referenced in that cycle. `user_feedback` is `"accepted"` for an accepted submission; rejection entries preserve the decision and reason, with the review authority identified. A cycle ending in a request or interruption can have no review decision.
 
 Study instruction and task files are shown as inputs. The launcher assembled its stdin prompt from these files, the cycle number and the accumulated decisions and responses; no separate verbatim stdin-prompt capture was retained. Native events without timestamps remain untimed. The recovered Claude lake stream replaces its overlapping prefix once.
 

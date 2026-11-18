@@ -4648,16 +4648,7 @@
           "exported_sha256": "ce41655f6b1a176a57438e377e529ff71f7897089e592673336e7615a1c6d9bb"
         }
       ],
-      "user_feedback": {
-        "decision": "accept",
-        "binding": "dfb57fbb843a070e0e3078a15d5587ef74bcfd85a5217516520e9b6b1d8be1aa",
-        "reason": "Human TUI acceptance after reviewing the component and heat-transfer assumptions, the differential-equation premise and derived solution, and the final crossing-time conclusions: Ok, accept. Lets get back to claude fish.",
-        "time": "2026-11-17T23:03:03.218139+00:00",
-        "verification_verdict": "proved",
-        "attempt": "attempt-004",
-        "review_authority": "personal user review in TUI",
-        "source_sha256": "ecaca1e9605db8846ccf22a084f890b74f4c5a15d7fedc770d0433db30bfa969"
-      },
+      "user_feedback": "accepted",
       "status": "accepted"
     }
   ],

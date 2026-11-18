@@ -1192,16 +1192,7 @@
           "exported_sha256": "cc46a9f296a128e1edc411d6a079720001306bb1cc2467f7c38906fd48cc0816"
         }
       ],
-      "user_feedback": {
-        "decision": "accept",
-        "binding": "32f2bc45f4d14028712fe582f6f950b3ce55607966901d2a69afebeea85f147d",
-        "reason": "Human TUI review accepted the stated illustrative model, definitions and theorem. The exact proved expression may be numerically evaluated to obtain the cooling-time prediction; a tighter certified decimal interval is unnecessary for this demonstration.",
-        "time": "2026-11-17T15:25:34.925967+00:00",
-        "verification_verdict": "proved",
-        "attempt": "attempt-001",
-        "review_authority": "personal user review in TUI",
-        "source_sha256": "26b47f329d111cf94acb9bbfd44cb9f367651845763ec3ab8c1d90ed490cc1af"
-      },
+      "user_feedback": "accepted",
       "status": "accepted"
     }
   ],

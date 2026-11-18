@@ -10460,16 +10460,7 @@
           "exported_sha256": "33bb9a6dfc4398a6073cb89d5486e3debb176314ffe7c271a2ed0ebbeeb98809"
         }
       ],
-      "user_feedback": {
-        "decision": "accept",
-        "binding": "2add6396429883594e25774337df23d359e6c84c93177dd25dd7f3788f1d7320",
-        "reason": "Accepted by the orchestrating assistant under explicit user delegation to finish the remaining cycles, not personal user inspection of this revision. The agent final manifest explicitly assumes an exhaustive eight-taxon universe and complete mapped-stratum coverage, making its derived total the whole-lake count conditional on that idealisation. All eight taxa are explicitly assumed present with probability1; positive conditioning actually removes zero species counts, and no posterior occurrence probabilities are inferred from the informal Bayes factors. The count likelihood permits repeated encounters and unbounded false-label counts, with rare-taxon false/true alternatives retained. The all-zero-false-label conditional approximation for perch/roach, calibration-to-field conversion, density hyperprior, scenario transfer, independence and geometry assumptions remain exposed and are accepted for this illustrative model. The observed camera arrays, false-positive totals and exact geometry/exposure were independently matched to the supplied synthetic JSON; nominal Wilson diagnostics were independently checked without claiming formal confidence coverage or field-transfer validation. Lean proves the cell Bayesian posterior, species and total probability laws with moments, and actual numerical population mean/variance bounds in the three scenarios. Source Model.lean is unchanged from the independently proved prior candidate; this new frozen packet also independently passed host Lean/kernel/extraction checks, with no added axioms/sorry and faithful declaration identities. Two residual narrative errors have been corrected in a separately attributed operator reading copy, with original report and proof preserved: the stale panel-only quantity paragraph is reconciled with the agent-authored final whole-lake idealisation, and the odds identity uses posterior odds rather than probability. That copy, hashes and exact diff are in control/operator-validation-attempt-006 and accompany the accepted evidence. These edits add no new model assumption or proof. No real field measurement, unconditional census, calibrated detection transfer, unproved Bayes-factor calculation or physical-accuracy guarantee is accepted as a proved result. Original attempts, traces, failed checks and all reviews remain retained.",
-        "time": "2026-11-18T03:36:46.921537+00:00",
-        "verification_verdict": "proved",
-        "attempt": "attempt-006",
-        "review_authority": "orchestrating assistant under explicit user delegation",
-        "source_sha256": "976bdf8a7767b81511a94343fe7fbd455ea57037c655317d540b6f7e481eabb2"
-      },
+      "user_feedback": "accepted",
       "status": "accepted"
     }
   ],

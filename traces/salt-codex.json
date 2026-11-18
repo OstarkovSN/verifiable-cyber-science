@@ -8986,16 +8986,7 @@
           "exported_sha256": "a84f624ea30198975e0d5524f215bb01c0abf588f2223ca00a96c4b21290e0ad"
         }
       ],
-      "user_feedback": {
-        "decision": "accept",
-        "binding": "137491ee8b07495ee919814eb7a41c5fc1c03dcc3cc655fe28a905bf8688564b",
-        "reason": "Accepted by the orchestrating assistant under the user instruction to finish the remaining cycles, not personal user inspection of this revision. Accept the conditional10g NaCl worked example in salt_timing_answer. Primary Parker capacity and enthalpy inputs match the retained original-page/CSV evidence; independent exact rational arithmetic reproduces both fitted parameter triples and the107.5J/mol conservative margin. The source computes rational-family parameters from calorimetry, derives the composition blend and full-interval capacity/enthalpy inequalities, then derives positive variable component storage, the mixing sign, the net-power change from the common loss law, and the time comparison from inverse first-law balances. It does not assume the desired timing optimum or a prechosen Cs sign. The chosen rational empirical family, affine composition behavior and extension from20..30C calibration to19..100C are explicit model assumptions, accepted for this illustrative qualitative demonstration without any claim of certified physical extrapolation accuracy. Nominal literature inputs, water-capacity lower guard, nonnegative solid sensible increment, phase brackets, complete liquid dissolution/mixing solvability, and lumped apparatus premises remain exposed. This is not an Archer/IAPWS uniform material certificate, a physical experiment, a measured saving or a universal answer for unspecified apparatus. Those limits are clearly retained in the report and candidate. Actual formal verdict proved, no added axioms or sorry, standalone extraction faithful, all dependency identities verified; immutable attempt binding checked. User accepted the general apparatus model and did not require a numerical duration. All previous rejected attempts, failed certification and diagnostics remain preserved.",
-        "time": "2026-11-18T02:40:57.877075+00:00",
-        "verification_verdict": "proved",
-        "attempt": "attempt-005",
-        "review_authority": "orchestrating assistant under explicit user delegation",
-        "source_sha256": "df95450211c3f95b00c6e8bdf2c6544b83c6b66d986a7c49c52e091c9a78f7f6"
-      },
+      "user_feedback": "accepted",
       "status": "accepted"
     }
   ],

@@ -4665,16 +4665,7 @@
           "exported_sha256": "3448376b79cb502613c922d033b473b5fbff1156263170ff3734c72170a70aa8"
         }
       ],
-      "user_feedback": {
-        "decision": "accept",
-        "binding": "b2fa8a800d9064d5cb68454c0c665a147d02b27037d461ea799e592f53706b6c",
-        "reason": "Accepted by delegated operator scientific review under the user goal \"finish the rest of the cycles yourself\"; this is not a claim that the user personally reviewed this new attempt. Primary ACS author supplement DOI10.1021/je8008123.s001 was independently retrieved and statically inspected: the AppCp/CpSolution formula and all six NaCl coefficients agree with the exposed Lean correlation, within the explicit decimal rounding. The source fit domain1.5..120C and mass fraction<=.261 cover the declared model. Frozen binding, proved verdict, no added axioms/gaps and exact extraction identity verified. The conditional20..50g/kg NaCl model now derives the negative capacity change, variable-capacity enthalpy/mixing comparison and immediate-addition timing inequality, using the Parker anchor with correct units and same-temperature reference conversion. Exposed water/pot capacity, crystalline capacity, relative-enthalpy and boiling-temperature guards are accepted as empirical scenario premises in this regime, not as formally certified physical-law accuracy. No physical experiment or numerical time saving is claimed. Supporting operator source validation and its file hashes are in control/operator-validation-attempt-005/validation.json.",
-        "time": "2026-11-18T01:58:59.723842+00:00",
-        "verification_verdict": "proved",
-        "attempt": "attempt-005",
-        "review_authority": "orchestrating assistant under explicit user delegation",
-        "source_sha256": "cb0d0c749cc2c619a75b20029369390d9937e5647c34178e81b30c788813daad"
-      },
+      "user_feedback": "accepted",
       "status": "accepted"
     }
   ],

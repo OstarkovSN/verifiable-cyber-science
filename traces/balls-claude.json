@@ -1194,16 +1194,7 @@
           "exported_sha256": "ede4dd799dcf7dc248b5784e1b46f438f2b15294b57c0ce7f49925d177b642bd"
         }
       ],
-      "user_feedback": {
-        "decision": "accept",
-        "binding": "8a4b7b9909c6c39b1d13ef1aa2ee10af5e555a3ce6335cd1ce7582bc784a57f9",
-        "reason": "Human TUI review of the revised assumptions, definitions and conclusion: Great! Accept it)",
-        "time": "2026-11-17T13:47:13.683296+00:00",
-        "verification_verdict": "proved",
-        "attempt": "attempt-002",
-        "review_authority": "personal user review in TUI",
-        "source_sha256": "f9b20bda8ccca7c7427081b6c3df9f9d69baf2eff9720363206c3c602a514650"
-      },
+      "user_feedback": "accepted",
       "status": "accepted"
     }
   ],

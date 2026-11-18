@@ -249,8 +249,13 @@ def _file(base: Path, spec: str | dict, *, kind="code") -> dict:
 
 
 def _feedback(base: Path, value: Any) -> Any:
-    if isinstance(value, str):
-        return json.loads(_path(base, value).read_text())
+    if isinstance(value, str) and value != "accepted":
+        value = json.loads(_path(base, value).read_text())
+    if isinstance(value, dict) and value.get("decision") == "accept":
+        return "accepted"
+    if isinstance(value, list):
+        return ["accepted" if isinstance(item, dict) and item.get("decision") == "accept" else item
+                for item in value]
     return value if value is not None else []
 
 
@@ -427,7 +432,9 @@ def render_run(run: dict) -> str:
             body += f'<h3 id="{esc(cycle["id"])}-code">Produced code</h3>'
             for code in cycle["produced_code"]:
                 body += '<div data-searchable>' + details(code["name"], code["content"]) + '</div>'
-        if cycle["user_feedback"]:
+        if cycle["user_feedback"] == "accepted":
+            body += f'<p id="{esc(cycle["id"])}-review" class="feedback" data-searchable>accepted</p>'
+        elif cycle["user_feedback"]:
             body += (f'<div id="{esc(cycle["id"])}-review" data-searchable>'
                      + details("Review feedback", cycle["user_feedback"], "feedback", True) + '</div>')
         body += '</section>'

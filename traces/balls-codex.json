@@ -2562,16 +2562,7 @@
           "exported_sha256": "7d4c265d83730727677c5f1b8c8362b94c89506daff1ead058c24d82e4fed64c"
         }
       ],
-      "user_feedback": {
-        "decision": "accept",
-        "binding": "2060bebe612c788e56e764e6b20cb8e40b2c75af95acf9acf7900bd225f8d64e",
-        "reason": "Human review in TUI: defs and axioms are ok and the conclusion is what I wanted. Accepted.",
-        "time": "2026-11-17T13:02:35.850651+00:00",
-        "verification_verdict": "proved",
-        "attempt": "attempt-002",
-        "review_authority": "personal user review in TUI",
-        "source_sha256": "cc9ada959bc0a3b00e4ecdd5c4d933d64fc58845b1bea106ebeccae3818ff742"
-      },
+      "user_feedback": "accepted",
       "status": "accepted"
     }
   ],

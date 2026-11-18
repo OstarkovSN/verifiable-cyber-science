@@ -2519,16 +2519,7 @@ theorem answer_theorem : ∀ (T : ℝ → ℝ) (r V ρ c h Ta H A k : ℝ),
     · rw [ht, lt_div_iff₀ hkpos, hkval]; nlinarith
     · rw [ht, div_lt_iff₀ hkpos, hkval]; nlinarith
   · exact fun h =&gt; h.1
-</pre></details></div><div id="cycle-001-review" data-searchable><details class="feedback" open><summary>Review feedback</summary><pre>{
-  &quot;decision&quot;: &quot;accept&quot;,
-  &quot;binding&quot;: &quot;32f2bc45f4d14028712fe582f6f950b3ce55607966901d2a69afebeea85f147d&quot;,
-  &quot;reason&quot;: &quot;Human TUI review accepted the stated illustrative model, definitions and theorem. The exact proved expression may be numerically evaluated to obtain the cooling-time prediction; a tighter certified decimal interval is unnecessary for this demonstration.&quot;,
-  &quot;time&quot;: &quot;2026-11-17T15:25:34.925967+00:00&quot;,
-  &quot;verification_verdict&quot;: &quot;proved&quot;,
-  &quot;attempt&quot;: &quot;attempt-001&quot;,
-  &quot;review_authority&quot;: &quot;personal user review in TUI&quot;,
-  &quot;source_sha256&quot;: &quot;26b47f329d111cf94acb9bbfd44cb9f367651845763ec3ab8c1d90ed490cc1af&quot;
-}</pre></details></div></section><script>
+</pre></details></div><p id="cycle-001-review" class="feedback" data-searchable>accepted</p></section><script>
 const search=document.querySelector('#search');
 if(search)search.addEventListener('input',()=>{const q=search.value.toLowerCase();document.querySelectorAll('[data-searchable]').forEach(el=>{el.hidden=!el.textContent.toLowerCase().includes(q);el.querySelectorAll('details').forEach(d=>{if(q){if(!('searchWasOpen'in d.dataset))d.dataset.searchWasOpen=String(d.open);d.open=!el.hidden}else if('searchWasOpen'in d.dataset){d.open=d.dataset.searchWasOpen==='true';delete d.dataset.searchWasOpen}})});});
 document.querySelectorAll('[data-expand]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('details').forEach(d=>d.open=b.dataset.expand==='yes')}));

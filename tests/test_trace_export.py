@@ -92,7 +92,7 @@ def test_cycle_boundaries_code_feedback_and_html_escaping(tmp_path):
     spec = {"id": "balls-codex", "task": "Balls", "harness": {"name": "Codex", "model": "model"},
             "task_file": "task.md", "instructions_file": "instructions.md", "initial_feedback_file": "clarification.md", "cycles": [
                 {"id": "cycle-001", "produced_code": ["Model.lean"], "user_feedback": {"decision": "reject", "authority": "personal user", "reason": "<img src=x>"}},
-                {"id": "cycle-002", "events": [{"type": "message", "role": "assistant", "content": "revision"}], "user_feedback": {"decision": "accept", "authority": "delegated assistant"}},
+                {"id": "cycle-002", "events": [{"type": "message", "role": "assistant", "content": "revision"}], "user_feedback": {"decision": "accept", "authority": "delegated assistant", "reason": "Acceptance receipt prose", "binding": "receipt-only-binding"}},
             ]}
     run = export_run(spec, tmp_path, Sanitizer())
     assert run["messages"][0]["produced_code"][0]["content"].endswith("by decide\n")
@@ -103,7 +103,12 @@ def test_cycle_boundaries_code_feedback_and_html_escaping(tmp_path):
     assert "&lt;script&gt;bad()" in rendered
     assert 'href="index.html"' in rendered
     assert 'href="balls-codex.json"' in rendered
-    assert "delegated assistant" in rendered
+    assert run["messages"][1]["user_feedback"] == "accepted"
+    assert run["messages"][0]["user_feedback"] == spec["cycles"][0]["user_feedback"]
+    assert "delegated assistant" not in rendered
+    assert "Acceptance receipt prose" not in rendered
+    assert "receipt-only-binding" not in rendered
+    assert 'id="cycle-002-review" class="feedback" data-searchable>accepted</p>' in rendered
     assert "<title>Balls — Codex</title>" in rendered
     assert "<h1>Balls</h1><p>Codex</p>" in rendered
     assert run["task"] == (tmp_path / "task.md").read_text()
@@ -115,6 +120,14 @@ def test_cycle_boundaries_code_feedback_and_html_escaping(tmp_path):
     assert 'href="#cycle-001-review"' in rendered
     assert 'id="cycle-001-review"' in rendered
     assert 'href="#cycle-002-code"' not in rendered
+
+
+def test_acceptance_feedback_loaded_from_file_is_status_only(tmp_path):
+    (tmp_path / "decision.json").write_text(json.dumps({"decision": "accept", "reason": "Private receipt prose"}))
+    spec = {"id": "run", "task": "Task", "harness": "Codex", "cycles": [{"user_feedback": "decision.json"}]}
+    run = export_run(spec, tmp_path, Sanitizer())
+    assert run["messages"][0]["user_feedback"] == "accepted"
+    assert "Private receipt prose" not in json.dumps(run)
 
 
 def test_sanitized_code_has_distinct_original_and_exported_hashes(tmp_path):
