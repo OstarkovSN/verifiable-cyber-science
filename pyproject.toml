@@ -2,6 +2,8 @@
 name = "vcs-protocol"
 version = "0.1.0"
 requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE.md"]
 dependencies = ["click>=8,<9"]
 
 [dependency-groups]
@@ -10,6 +12,7 @@ dev = ["pytest>=8,<9"]
 [project.scripts]
 vcs-protocol = "vcs_protocol:main"
 vcs-matrix = "vcs_matrix:main"
+vcs-trace-export = "vcs_trace_export:main"
 
 [build-system]
 requires = ["hatchling"]

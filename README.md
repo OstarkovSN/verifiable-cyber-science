@@ -4,6 +4,12 @@ A human-in-the-loop harness for scientific reasoning with Codex or Claude Code a
 
 [PROTOCOL.md](PROTOCOL.md) describes the workflow. [protocols/instructions.txt](protocols/instructions.txt) contains the scientist instructions.
 
+## Recorded runs
+
+[Browse the eight runs](https://ostarkovsn.github.io/verifiable-cyber-science/traces/) or download the repository and open [traces/index.html](traces/index.html). Each run has JSON and HTML containing the task, recorded messages and tool activity, generated Lean code, checking results and review feedback. The records distinguish personal user decisions from delegated assistant review. Article references use DOI links; PDFs are not included.
+
+The [trace format and export command](traces/README.md) describe how to generate the same views from saved run records.
+
 ## Requirements
 
 - Python 3.11 or newer and [uv](https://docs.astral.sh/uv/).
@@ -121,3 +127,5 @@ VCS_TEST_LIBRARY_ROOT=/path/to/pinned-cache-checkout VCS_TEST_CLAUDE=1 uv run py
 ~~~
 
 These controls exercise filesystem isolation, native client version and authentication metadata, prompt transport, proof acceptance and rejection, conditional axioms, extraction identity and review bindings.
+
+The project is licensed under the [MIT license](LICENSE.md).
