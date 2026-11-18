@@ -1,7 +1,4 @@
-"""Restricted Lean validation and kernel-environment assumption audit.
-
-Stable VAS_ audit markers preserve compatibility with recorded evidence.
-"""
+"""Restricted Lean validation and kernel-environment assumption audit."""
 import os
 from pathlib import Path
 import re
@@ -18,7 +15,7 @@ FORBIDDEN = re.compile(
     r"partial|private|local|scoped|namespace|section|end|universe|variable|export|IO|System|"
     r"Lean|native|simproc|dsimproc)\b"
     # any word containing elab (by_elab, elab_rules, run_elab: `\belab\b` misses them, `_` is a word character);
-    # backtick name literals and quotations are metaprogramming, which a proof body never needs (OT-1861)
+    # Backtick name literals and quotations are metaprogramming, which a proof body never needs.
     r"|\w*elab\w*|`|#|@\[|\$|«|»")
 
 

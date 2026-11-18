@@ -10,6 +10,50 @@ import pytest
 import vcs_protocol as p
 
 
+@pytest.mark.parametrize("agent", ["codex", "claude"])
+def test_default_inputs_are_frozen_and_survive_source_changes(tmp_path, monkeypatch, agent):
+    instructions = (p.ROOT / "protocols/instructions.txt").read_bytes()
+    question = (p.ROOT / "protocols/task-balls.txt").read_bytes()
+    source = tmp_path / "source"
+    (source / "protocols").mkdir(parents=True)
+    task_file = source / "protocols/task-balls.txt"
+    instruction_file = source / "protocols/instructions.txt"
+    task_file.write_bytes(question)
+    instruction_file.write_bytes(instructions)
+    monkeypatch.setattr(p, "ROOT", source)
+    monkeypatch.setattr(p, "runtime_config", lambda *a: {"agent": a[3]})
+    monkeypatch.setattr(p, "execute_cycle", lambda run, state: p.write_json(run / "control/state.json", state))
+    run = tmp_path / "run"
+    result = CliRunner().invoke(p.main, ["start", "--run-dir", str(run), "--agent", agent])
+    assert result.exit_code == 0, result.output
+    state = p.load_state(run)
+    assert state["runtime"]["agent"] == agent
+    assert {item.name for item in (run / "control/protocol").iterdir()} == {"task.txt", "instructions.txt"}
+    assert (run / "control/protocol/instructions.txt").read_bytes() == instructions
+    assert (run / "control/protocol/task.txt").read_bytes() == question
+    instruction_file.write_text("Changed scientist instructions")
+    task_file.write_text("Changed scientific question")
+    assert p.protocol_text(run, state) == (instructions.decode(), question.decode())
+
+
+def test_missing_snapshot_metadata_stops_before_authentication_or_inference(tmp_path, monkeypatch):
+    run = tmp_path / "run"
+    (run / "work").mkdir(parents=True)
+    (run / "control").mkdir()
+    calls = []
+    monkeypatch.setattr(p, "ensure_subscription", lambda *a: calls.append("authentication"))
+    monkeypatch.setattr(p, "run_container", lambda *a, **k: calls.append("inference"))
+    state = {"status": "new", "cycles": 0, "runtime": {"agent": "codex"}, "attempts": []}
+    p._execute_once(run, state)
+    assert state["status"] == "scientist_failed" and state["cycles"] == 0
+    assert calls == []
+
+
+def test_client_identity_requires_explicit_recorded_agent():
+    with pytest.raises(ValueError, match="unsupported scientist client"):
+        p.client_name({})
+
+
 @pytest.fixture
 def custom_run(tmp_path, monkeypatch):
     task = tmp_path / "question.txt"
@@ -76,9 +120,9 @@ def test_snapshot_mutation_blocks_cycle_and_resume_before_client(custom_run, mon
 
 def fake_config(tmp_path, agent="codex"):
     return {"agent": agent, "lean": str(tmp_path / "lean"), "click": str(tmp_path / "click"), "libraries": [],
-            "codex": str(tmp_path / "codex"), "code_mode_host": str(tmp_path / "companion"),
-            "auth": str(tmp_path / "auth"), "client_binary": str(tmp_path / "claude"),
-            "memory": "4g", "cpus": "2", "protocol_snapshot": True}
+            "code_mode_host": str(tmp_path / "companion"),
+            "auth": str(tmp_path / "auth"), "client_binary": str(tmp_path / agent),
+            "memory": "4g", "cpus": "2"}
 
 
 @pytest.mark.parametrize("agent", ["codex", "claude"])
@@ -90,7 +134,7 @@ def test_mounts_only_selected_protocol_files_and_resources(custom_run, agent):
     assert len(protocol) == 2
     for name in ["instructions.txt", "task.txt"]:
         assert f"type=bind,src={run}/control/protocol/{name},dst=/protocol/{name},readonly" in protocol
-    assert not any(f"src={run}/control," in entry or "protocols/v1" in entry for entry in mounts)
+    assert not any(f"src={run}/control," in entry or f"src={p.ROOT}/protocols," in entry for entry in mounts)
     assert "--memory=4g" in cmd and "--cpus=2" in cmd
     checker = p.docker_base(fake_config(run.parent, agent), run / "control/attempt-001")
     assert "--memory=4g" in checker and "--cpus=2" in checker
@@ -130,7 +174,7 @@ def test_real_snapshot_visibility_without_inference(custom_run):
     run, _, _, _ = custom_run
     # Native binary/version and credential metadata only; scientist command never runs.
     config = p.runtime_config(Path(library))
-    config.update(protocol_snapshot=True, memory="4g", cpus="2")
+    config.update(memory="4g", cpus="2")
     (run / "control/protocol/other-task.txt").write_text("must be hidden")
     (run / "control/prior-answer.txt").write_text("must be hidden")
     script = """from pathlib import Path

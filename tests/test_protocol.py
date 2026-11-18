@@ -10,6 +10,12 @@ from click.testing import CliRunner
 import vcs_protocol as p
 
 
+def bind_protocol(run, state):
+    inputs = p.freeze_protocol(run, p.ROOT / "protocols/task-balls.txt", p.ROOT / "protocols/instructions.txt")
+    state.update(protocol_inputs=inputs, protocol_sha256=inputs["instructions.txt"]["sha256"],
+                 task_sha256=inputs["task.txt"]["sha256"])
+
+
 @pytest.fixture
 def candidate(tmp_path):
     (tmp_path / "Model.lean").write_text("import Mathlib.Data.Nat.Basic\n"
@@ -143,6 +149,7 @@ def test_real_docker_isolation(runtime, tmp_path):
     outside.write_text("HOST PRIVATE MARKER")
     work = tmp_path / "work"
     work.mkdir()
+    bind_protocol(tmp_path, {})
     (work / "allowed.txt").write_text("ALLOWED")
     code = ("from pathlib import Path; "
             "assert Path('/work/allowed.txt').read_text() == 'ALLOWED'; "
@@ -304,7 +311,8 @@ def test_requested_model_flags_are_explicit(tmp_path, monkeypatch):
         return subprocess.CompletedProcess(cmd, 9)
     monkeypatch.setattr(p, "run_container", client)
     monkeypatch.setattr(p, "ensure_subscription", lambda *args: None)
-    state = {"cycles": 0, "runtime": {"model": "requested-model", "reasoning_effort": "high"}, "attempts": []}
+    state = {"cycles": 0, "runtime": {"agent": "codex", "model": "requested-model", "reasoning_effort": "high"}, "attempts": []}
+    bind_protocol(run, state)
     p.execute_cycle(run, state)
     assert len(calls) == 1  # Client failures never automatically retry.
     cmd = calls[0]
@@ -376,7 +384,9 @@ def test_host_finalizer_rejects_symlink_packet_destination(candidate, monkeypatc
         p.write_json(out / "verdict.json", {"ok": True, "reviewable": True, "check_complete": True, "verdict": "proved"})
         return subprocess.CompletedProcess(cmd, 0)
     monkeypatch.setattr(p, "run_container", checker)
-    state = {"runtime": dict.fromkeys(["image", "lean_version", "codex_version", "codex_sha256"], "control"),
+    config = dict.fromkeys(["image", "lean_version", "client_binary", "client_version", "client_sha256"], "control")
+    config["agent"] = "codex"
+    state = {"runtime": config,
              "attempts": [], "responses": [], "protocol_sha256": "control", "task_sha256": "control"}
     with pytest.raises((OSError, ValueError)):
         p.freeze_and_check(run, state)
@@ -444,7 +454,8 @@ def test_subscription_change_stops_cycle_before_inference(tmp_path, monkeypatch)
         calls.append(cmd)
         return subprocess.CompletedProcess(cmd, 0, stdout="Logged in using an API key\n", stderr="")
     monkeypatch.setattr(p, "run_container", login)
-    state = {"cycles": 4, "runtime": {}, "attempts": [], "status": "input_received"}
+    state = {"cycles": 4, "runtime": {"agent": "codex"}, "attempts": [], "status": "input_received"}
+    bind_protocol(run, state)
     p.execute_cycle(run, state)
     assert state["status"] == "scientist_failed"
     assert state["cycles"] == 4
@@ -477,10 +488,9 @@ def test_mutated_review_receipt_blocks_resume_before_model(tmp_path, monkeypatch
     codex = tmp_path / "native-codex"
     codex.write_text("control native binary")
     state = p.load_state(run)
-    state.update(runtime={"codex": str(codex), "codex_sha256": p.digest(codex),
-                          "code_mode_host": str(codex), "code_mode_host_sha256": p.digest(codex)},
-                 protocol_sha256=p.digest(p.ROOT / "protocols/v1/instructions.txt"),
-                 task_sha256=p.digest(p.ROOT / "protocols/v1/task-balls.txt"))
+    state.update(runtime={"agent": "codex", "client_binary": str(codex), "client_sha256": p.digest(codex),
+                          "code_mode_host": str(codex), "code_mode_host_sha256": p.digest(codex)})
+    bind_protocol(run, state)
     p.write_json(run / "control/state.json", state)
     receipt = p.read_json(attempt / "decision.json")
     receipt["reason"] = "altered human decision"
@@ -500,7 +510,8 @@ def test_fresh_cycle_receives_host_recorded_human_feedback(tmp_path, monkeypatch
     # A scientist can alter its working copy; the next prompt uses host custody.
     (run / "work/human-feedback.json").write_text('{"reason":"forged approval"}')
     state = p.load_state(run)
-    state.update(cycles=0, runtime={})
+    state.update(cycles=0, runtime={"agent": "codex"})
+    bind_protocol(run, state)
     prompts = []
     monkeypatch.setattr(p, "ensure_subscription", lambda *args: None)
     monkeypatch.setattr(p, "docker_base", lambda *args, **kwargs: ["docker", "run"])

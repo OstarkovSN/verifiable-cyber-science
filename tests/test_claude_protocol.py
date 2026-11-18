@@ -96,6 +96,9 @@ def make_run(tmp_path):
     (run / "work").mkdir(parents=True)
     (run / "control").mkdir()
     state = {"runtime": {"agent": "claude"}, "cycles": 0, "attempts": [], "responses": []}
+    inputs = p.freeze_protocol(run, p.ROOT / "protocols/task-balls.txt", p.ROOT / "protocols/instructions.txt")
+    state.update(protocol_inputs=inputs, protocol_sha256=inputs["instructions.txt"]["sha256"],
+                 task_sha256=inputs["task.txt"]["sha256"])
     return run, state
 
 
@@ -240,7 +243,10 @@ def claude_runtime():
 
 def test_real_claude_docker_isolation_and_subscription(claude_runtime, tmp_path):
     config = claude_runtime
-    command = p.docker_base(config, tmp_path, scientist=True)
+    work = tmp_path / "work"
+    work.mkdir()
+    p.freeze_protocol(tmp_path, p.ROOT / "protocols/task-balls.txt", p.ROOT / "protocols/instructions.txt")
+    command = p.docker_base(config, work, scientist=True)
     mounts = [command[i + 1] for i, arg in enumerate(command[:-1]) if arg == "--mount"]
     assert any("dst=/native-auth/claude-credentials.json,readonly" in value for value in mounts)
     assert not any("dst=/usr/local/bin/codex" in value or "/home/claude/.claude.json" in value for value in mounts)
@@ -278,7 +284,7 @@ print('isolation and stdin passed')
     result = p.run_container(command + [p.IMAGE, *p.scientist_command(config), "--help"], capture_output=True, text=True, timeout=60)
     assert result.returncode == 0 and "Usage: claude" in result.stdout
     # Capture native status only inside the helper; exceptions omit account/profile details.
-    p.ensure_subscription(config, tmp_path)
+    p.ensure_subscription(config, work)
     # The Bash terminal has a shell and Python tool route; no inference is needed.
     result = p.run_container(command + [p.IMAGE, "/bin/sh", "-c", "python /harness/src/vcs_protocol.py tool --help"], capture_output=True, text=True, timeout=60)
     assert result.returncode == 0 and "check" in result.stdout and "request" in result.stdout

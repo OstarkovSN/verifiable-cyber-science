@@ -98,7 +98,7 @@ run_cmd do
 
 
 def run_lean(path):
-    """Lean, then leanchecker on the compiled module (OT-1861): a nonzero status if either fails."""
+    """Lean, then leanchecker on the compiled module: a nonzero status if either fails."""
     libs = sorted((ROOT / ".lake/packages").glob("*/.lake/build/lib/lean"))
     env = dict(os.environ, LEAN_PATH=":".join(map(str, libs)), LEAN_NUM_THREADS="1")
     with tempfile.TemporaryDirectory(prefix="vcs-olean-") as build:

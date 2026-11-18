@@ -230,8 +230,10 @@ def native_claude():
 
 
 def client_name(config):
-    # States from the original release have no agent field.
-    return config.get("agent", "codex")
+    agent = config.get("agent")
+    if agent not in DEFAULT_MODELS:
+        raise ValueError("unsupported scientist client")
+    return agent
 
 
 def resource_limits(memory="8g", cpus="2"):
@@ -273,17 +275,8 @@ def freeze_protocol(run, task_file, instructions_file, expected_hashes=None):
 
 
 def protocol_text(run, state):
-    """Verify each run snapshot before use; retain original v1 semantics."""
-    if "protocol_inputs" not in state:
-        instructions = ROOT / "protocols/v1/instructions.txt"
-        task = ROOT / "protocols/v1/task-balls.txt"
-        if (state.get("protocol_sha256", digest(instructions)) != digest(instructions) or
-                state.get("task_sha256", digest(task)) != digest(task)):
-            raise ValueError("protocol changed; start a new run")
-        return instructions.read_text(), task.read_text()
-    if not state["runtime"].get("protocol_snapshot"):
-        raise ValueError("custom protocol snapshot mount configuration missing")
-    metadata = state["protocol_inputs"]
+    """Verify the frozen question and instructions before using them."""
+    metadata = state.get("protocol_inputs", {})
     if set(metadata) != {"instructions.txt", "task.txt"}:
         raise ValueError("invalid protocol snapshot metadata")
     contents = {}
@@ -341,9 +334,7 @@ def runtime_config(library_root, codex_binary=None, auth_file=None, agent="codex
               "click": str(Path(click_module.__file__).parent),
               "lean_version": subprocess.check_output([str(lean / "bin/lean"), "--version"], text=True).strip()}
     if agent == "codex":
-        # Preserve original fields for old run records and integrations.
-        config.update(codex=str(binary), codex_version=version, codex_sha256=config["client_sha256"],
-                      code_mode_host=str(code_mode_host), code_mode_host_sha256=digest(code_mode_host))
+        config.update(code_mode_host=str(code_mode_host), code_mode_host_sha256=digest(code_mode_host))
     return config
 
 
@@ -351,14 +342,14 @@ def runtime_provenance(config):
     agent = client_name(config)
     provenance = {key: config[key] for key in ["image", "lean_version"]}
     provenance.update(agent=agent,
-                      client_binary=config.get("client_binary", config.get("codex")),
-                      client_version=config.get("client_version", config.get("codex_version")),
-                      client_sha256=config.get("client_sha256", config.get("codex_sha256")),
+                      client_binary=config["client_binary"],
+                      client_version=config["client_version"],
+                      client_sha256=config["client_sha256"],
                       requested_model=config.get("model", DEFAULT_MODELS[agent]),
                       requested_reasoning_effort=config.get("reasoning_effort", "medium"),
                       **resource_limits(config.get("memory", "8g"), config.get("cpus", "2")))
     if agent == "codex":
-        for key in ["codex_version", "codex_sha256", "code_mode_host", "code_mode_host_sha256"]:
+        for key in ["code_mode_host", "code_mode_host_sha256"]:
             if key in config:
                 provenance[key] = config[key]
     return provenance
@@ -368,8 +359,8 @@ def validate_runtime(config):
     agent = client_name(config)
     if agent not in DEFAULT_MODELS:
         raise ValueError("unsupported scientist client")
-    binary = config.get("client_binary", config.get("codex"))
-    expected = config.get("client_sha256", config.get("codex_sha256"))
+    binary = config.get("client_binary")
+    expected = config.get("client_sha256")
     if not binary or not expected or digest(binary) != expected:
         raise ValueError("scientist runtime binary changed; start a new run")
     if agent == "codex" and digest(config["code_mode_host"]) != config["code_mode_host_sha256"]:
@@ -409,15 +400,12 @@ def docker_base(config, work, scientist=False):
             cmd += mount(config["client_binary"], "/usr/local/bin/claude")
             cmd += mount(config["auth"], "/native-auth/claude-credentials.json")
         else:
-            cmd += mount(config["codex"], "/usr/local/bin/codex")
+            cmd += mount(config["client_binary"], "/usr/local/bin/codex")
             cmd += mount(config["code_mode_host"], "/usr/local/bin/codex-code-mode-host")
             cmd += mount(config["auth"], "/native-auth/auth.json")
-        if config.get("protocol_snapshot"):
-            # File mounts exclude siblings, provenance, prior answers and host control.
-            for name in ["instructions.txt", "task.txt"]:
-                cmd += mount(Path(work).parent / "control/protocol" / name, "/protocol/" + name)
-        else:
-            cmd += mount(ROOT / "protocols/v1", "/protocol")
+        # File mounts exclude siblings, provenance, prior answers and host control.
+        for name in ["instructions.txt", "task.txt"]:
+            cmd += mount(Path(work).parent / "control/protocol" / name, "/protocol/" + name)
     return cmd
 
 
@@ -775,19 +763,12 @@ def start(run_dir, library_root, agent, codex_binary, claude_binary, initial_fee
     run = run_dir.resolve()
     (run / "work").mkdir(parents=True)
     (run / "control").mkdir(mode=0o700)
-    state = {"version": 1, "status": "new", "cycles": 0, "attempts": [], "responses": [], "runtime": config,
-             "protocol_sha256": digest(ROOT / "protocols/v1/instructions.txt"), "task_sha256": digest(ROOT / "protocols/v1/task-balls.txt")}
-    # Preserve original scientific input in host custody, outside the agent's workspace.
-    if task_file or instructions_file:
-        inputs = freeze_protocol(run, task_file or ROOT / "protocols/v1/task-balls.txt",
-                                 instructions_file or ROOT / "protocols/v1/instructions.txt",
-                                 {"task.txt": expected_task_sha256, "instructions.txt": expected_instructions_sha256})
-        config["protocol_snapshot"] = True
-        state.update(version=2, protocol_inputs=inputs,
-                     protocol_sha256=inputs["instructions.txt"]["sha256"],
-                     task_sha256=inputs["task.txt"]["sha256"])
-    else:
-        shutil.copytree(ROOT / "protocols/v1", run / "control/protocol")
+    inputs = freeze_protocol(run, task_file or ROOT / "protocols/task-balls.txt",
+                             instructions_file or ROOT / "protocols/instructions.txt",
+                             {"task.txt": expected_task_sha256, "instructions.txt": expected_instructions_sha256})
+    state = {"version": 2, "status": "new", "cycles": 0, "attempts": [], "responses": [], "runtime": config,
+             "protocol_inputs": inputs, "protocol_sha256": inputs["instructions.txt"]["sha256"],
+             "task_sha256": inputs["task.txt"]["sha256"]}
     if initial_feedback is not None:
         atomic_write(run / "control/initial-feedback.txt", initial_feedback)
         state["initial_feedback"] = {"source": "human task clarification supplied via --initial-feedback-file",
